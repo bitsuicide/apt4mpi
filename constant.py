@@ -1,0 +1,10 @@
+""" Shared constant """
+
+BASH_FILE = "launch_job.sh"
+MPI_FILE = "mpi_parallel.py"
+OUTPUT_FOLDER = "output"
+PBS_PREFIX = "#PBS"
+MODULE_PREFIX = "module load"
+MPI_PREFIX = "time mpirun"
+BASH = "#!/bin/bash"
+DATA_DIR = "$CINECA_SCRATCH" 

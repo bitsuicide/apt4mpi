@@ -1,0 +1,61 @@
+{
+    "modules": [{
+        "name": "python",
+        "version": "2.7.9",
+        "autoload": true
+    }, {
+        "name": "hisat2",
+        "version": "2.0.4"
+    }, {
+        "name": "bowtie",
+        "version": "1.1.2"
+    }],
+    "commands": [{
+        "executable": "hisat2",
+        "id": "hisat2",
+        "options": [{
+            "key": "-l",
+            "value": 50
+        }, {
+            "key": "-t",
+            "value": 4
+        }],
+        "input_file_path": [""],
+        "output_file_path": [""]
+    }, {
+        "executable": "bowtie",
+       "id": "bowtie",
+       "branching_factor": 50,
+        "after": ["hisat2"],
+        "options": [{
+            "key": "-q",
+            "value": 10
+        }, {
+            "key": "-Q",
+            "value": 50
+        }]
+    },
+       {
+        "executable": "samtools merge",
+        "after": ["bowtie"],
+        "options": [{
+            "key": "-q",
+            "value": 10
+        }, {
+            "key": "-Q",
+            "value": 50
+        }]
+    }],
+   "job_options": {
+    "mpi_procs": 5,
+    "mpi_scheme": "master_slave|all_slaves",
+    "chunks": 10,
+    "memory": "5GB",
+    "walltime": "01:30:00",
+    "queue": "serial",
+    "account": "cin_staff",
+    "job_name": "custom_pipeline",
+    "error_log_path": "",
+    "output_log_path": ""
+   }
+}
