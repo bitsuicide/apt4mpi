@@ -93,3 +93,5 @@ example/
 
 #json
 .json
+
+.DS_Store
