@@ -1,39 +1,79 @@
 """ Tree data class """
 
+class Options:
+    """ Option class for handle different case """
+    opt_list = []
+    dynamic = False
+    io_index = {"input" : 0, "output" : 0}
+
+    def __init__(self, opt_list, dynamic):
+        self.opt_list = opt_list
+        self.dynamic = dynamic
+
+    def __str__(self):
+        return "{}, Dynamic: {}".format(self.opt_list, self.dynamic)
+
+    def set_doption(self, io_type, d_val):
+        if dynamic:
+            index = io_index[io_type]
+            if index != 0:
+                opt_list[index][2] = d_val
+            else:
+                raise AttributeError
+        else:
+            raise Exception("It is possible to set a dynamic value only if the obj is dynamic")
+
+    def get_doption(self, io_type):
+        if dynamic:
+            index = io_index[io_type]
+            if index != 0:
+                return opt_list[index]
+        else:
+            raise Exception("It is possible to set a dynamic value only if the obj is dynamic")
+
+    def add_option(self, opt, io_type=""):
+        self.opt_list.append(opt)
+        if io_type:
+            self.io_index[io_type] = len(self.opt_list) - 1
+
+    def add_doption(self, io_type, d_key=None, d_val=None, regex=None):
+        self.opt_list.append([io_type, d_key, d_val, regex])
+        self.io_index[io_type] = len(self.opt_list) - 1
+
 class Process:
+    """ Process class - Graph node """
     name = ""
     proc_id = ""
-    input_path = ""
-    output_path = ""
-    options = ""
-    parallelism = 1
-    father = None
+    options = None
+    branch_f = 1
+    father = []
     son = []
+    status = False 
 
-    def __init__(self, name, proc_id, input_path, output_path, options, parallelism, father):
+    def __init__(self, name, proc_id, options, branch_f, father):
         self.name = name
         self.proc_id = proc_id 
-        self.input_path = input_path
-        self.output_path = output_path
         self.options = options
-        self.parallelism = parallelism
+        self.branch_f = branch_f
         self.father = father
-
-    def print_son(self):
-        son = []
-        for s in self.son:
-            son.append(s.name)
-        return son
 
     def __str__(self):
         if self.father != None:
-            return "Name: {}, Options: {}, Parallelism level: {}, Father: {} Sons: {}".format(self.name, self.options, self.parallelism, self.father.name, self.print_son())
+            return "Name: {}, Id: {}, Options: {}, branch_f level: {}, Father: {} Sons: {}".format(self.name, self.proc_id, self.options, 
+                self.branch_f, self.print_nlist(self.father), self.print_nlist(self.son))
         else:
-            return "Name: {}, Options: {}, Parallelism level: {}, Father: None Sons: {}".format(self.name, self.options, self.parallelism, self.print_son())
+            return "Name: {}, id: {}, Options: {}, branch_f level: {}, Father: None Sons: {}".format(self.name, self.proc_id, self.options, 
+                self.branch_f, self.print_nlist(self.son))    
+
+    def print_nlist(self, l):
+        t_list = []
+        for e in l:
+            t_list.append(e.proc_id)
+        return t_list
 
 class Tree:
     nodes = {}
-    root = None
+    root = []
 
     def __init__(self, root, nodes):
         self.nodes = nodes
@@ -44,8 +84,9 @@ class Tree:
         for n in self.nodes:
             node = self.nodes[n]
             father = node.father
-            if father != None and node not in father.son:
-                if not father.son:
-                    father.son = [node]
-                else:
-                    father.son += node
+            for f in father: 
+                if node not in f.son:
+                    if not f.son:
+                        f.son = [node]
+                    else:
+                        f.son.append(node)

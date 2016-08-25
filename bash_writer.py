@@ -27,7 +27,7 @@ def gen_pbs(json_opt):
                 memory = json_opt[opt]
             elif opt == "mpi_procs":
                 mpi_proc = json_opt[opt]
-            elif opt == "num_cpu":
+            elif opt == "ncpus":
                 ncpus = json_opt[opt]
     if chunks != 0 and memory != 0 and mpi_proc != 0:
         sh_temp += "{} {} select={}:ncpus={}:mpiprocs={}:mem={}\n\n".format(c.PBS_PREFIX, "-l", chunks, ncpus, mpi_proc, memory)
@@ -44,13 +44,14 @@ def gen_module(json_mod):
     return sh_temp
 
 def gen_mpicmd():
-    """ Generate mpirun """
+    """ Generate mpirun command """
     sh_temp = "\necho \"START:\"`date`\n"
     sh_temp += "{} {}/{} \n".format(c.MPI_PREFIX, os.getcwd(), c.MPI_FILE)
     sh_temp += "echo \"END:\"`date`\n"
     return sh_temp
 
 def gen_bash(json):
+    """ Generate all the stuff for the bash file """
     sh_script = "{}\n".format(c.BASH)
     sh_script += gen_pbs(json["job_options"])
     sh_script += "cd {}\n\n".format(c.DATA_DIR)
