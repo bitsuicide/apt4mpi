@@ -63,7 +63,7 @@
     }, {
      "executable": "split",
      "id": "00027",
-        "after": ["0001"],
+     "after": ["0001"],
      "options": [{
          "type": "input"
      }, {

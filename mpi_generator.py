@@ -4,13 +4,13 @@ import constant as c
 def build_tree(json):
     """ Build three / graph process dependences """ 
     nodes = {}
-    root = None
-    id_count = 0
+    root_list = []
+    id_count = 1
     for cmd in json:
         name = proc_id = ""
         branch_f = 1
         father = []
-        options = tree.Options([], False)
+        options = tree.Options()
         for elem in cmd:
             if elem == "id":
                 proc_id = cmd[elem]
@@ -20,7 +20,12 @@ def build_tree(json):
                 branch_f = int(cmd[elem])
             elif elem == "after":
                 for i in range(len(cmd[elem])):
-                    father.append(nodes[cmd[elem][i]])
+                    t_node = nodes[cmd[elem][i]]
+                    father.append(t_node)
+                    if t_node.branch_f > 1:
+                        for i in range(0, t_node.branch_f - 1):
+                            f_id = "{}_{}".format(t_node.proc_id, i+2)
+                            father.append(nodes[f_id])
             elif elem == "options": # handle the different options case
                 for opt in cmd[elem]:
                     #print len(opt)
@@ -48,24 +53,39 @@ def build_tree(json):
         if proc_id == "": # generate new id 
             proc_id = "{}_{}".format(name, id_count)
             id_count += 1
-        process = tree.Process(name, proc_id, options, branch_f, father)
-        nodes[proc_id] = process
-        if root == None:
-            root = process
-    process_tree = tree.Tree(root, nodes)
+        if branch_f > 1: # process parallelism
+            new_proc_id = proc_id
+            for i in range(0, branch_f):
+                process = tree.Process(name, new_proc_id, options, branch_f, father)
+                nodes[new_proc_id] = process
+                new_proc_id = "{}_{}".format(proc_id, i+2)
+                branch_f = 1
+                if not father:
+                    root_list.append(process)
+        else:
+            process = tree.Process(name, proc_id, options, branch_f, father)
+            nodes[proc_id] = process
+            if not father:
+                root_list.append(process)
+    process_tree = tree.Tree(root_list, nodes)
     return process_tree
 
 def write_mpi(p_tree, num_proc):
     """ Write the mpi file """
     mpi_script = ""
-    n_list = [p_tree.root]
+    n_list = p_tree.root
+    n_visited = {}
+    for n in p_tree.nodes:
+        n_visited[n] = False
     while n_list:
         node = n_list.pop()
         if node.son:
             for c in node.son:
-                print c    
-                if c not in n_list:
-                    n_list.append(c)
+                if n_visited[c.proc_id] == False:
+                    print c
+                    if c not in n_list:
+                        n_list.append(c)
+                    n_visited[c.proc_id] = True
     return mpi_script
 
 def gen_mpi(json, num_proc):

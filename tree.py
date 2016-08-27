@@ -2,13 +2,10 @@
 
 class Options:
     """ Option class for handle different case """
-    opt_list = []
-    dynamic = False
-    io_index = {"input" : 0, "output" : 0}
-
-    def __init__(self, opt_list, dynamic):
-        self.opt_list = opt_list
-        self.dynamic = dynamic
+    def __init__(self):
+        self.opt_list = []
+        self.dynamic = False
+        self.io_index = {"input" : 0, "output" : 0}
 
     def __str__(self):
         return "{}, Dynamic: {}".format(self.opt_list, self.dynamic)
@@ -42,20 +39,14 @@ class Options:
 
 class Process:
     """ Process class - Graph node """
-    name = ""
-    proc_id = ""
-    options = None
-    branch_f = 1
-    father = []
-    son = []
-    status = False 
-
     def __init__(self, name, proc_id, options, branch_f, father):
         self.name = name
         self.proc_id = proc_id 
         self.options = options
         self.branch_f = branch_f
         self.father = father
+        self.son = []
+        self.status = False
 
     def __str__(self):
         if self.father != None:
@@ -72,9 +63,6 @@ class Process:
         return t_list
 
 class Tree:
-    nodes = {}
-    root = []
-
     def __init__(self, root, nodes):
         self.nodes = nodes
         self.root = root
@@ -84,9 +72,14 @@ class Tree:
         for n in self.nodes:
             node = self.nodes[n]
             father = node.father
+            f_temp = []
+            # compute and add parallels sons
+            for f in father:
+                if f.branch_f > 1:
+                    for i in range(0, f.branch_f - 1):
+                        f_id = "{}_{}".format(f.proc_id, i+2)
+                        f_temp.append(self.nodes[f_id])
+            father = father + f_temp
             for f in father: 
                 if node not in f.son:
-                    if not f.son:
-                        f.son = [node]
-                    else:
                         f.son.append(node)
