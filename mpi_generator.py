@@ -90,11 +90,10 @@ def write_mpi(p_tree, num_proc):
 
 def gen_mpi(json, num_proc):
     """ Generate all the stuff needed for the paralallelization """
-    mpi_script = ""
     process_tree = build_tree(json)
     process_tree.compute_son()
     print process_tree.root
     mpi_script = write_mpi(process_tree, num_proc)
-    return mpi_script
+    process_tree.save(c.SERIAL_FILE)
 
 

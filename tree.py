@@ -1,5 +1,7 @@
 """ Tree data class """
 
+import pickle
+
 class Options:
     """ Option class for handle different case """
     def __init__(self):
@@ -63,7 +65,7 @@ class Process:
         return t_list
 
 class Tree:
-    def __init__(self, root, nodes):
+    def __init__(self, root=None, nodes=None):
         self.nodes = nodes
         self.root = root
 
@@ -83,3 +85,9 @@ class Tree:
             for f in father: 
                 if node not in f.son:
                         f.son.append(node)
+
+    def save(self, path):
+        """ Save data structure on file """
+        f_obj = open(path, "wb")
+        pickle.dump(self, f_obj)
+        f_obj.close()
