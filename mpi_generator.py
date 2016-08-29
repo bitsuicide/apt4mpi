@@ -70,9 +70,13 @@ def build_tree(json):
     process_tree = tree.Tree(root_list, nodes)
     return process_tree
 
-def write_mpi(p_tree, num_proc):
+def build_cue(p_tree, num_proc):
     """ Write the mpi file """
-    mpi_script = ""
+    # init the cue
+    cue = []
+    for n in p_tree.root:
+        cue.append([n.proc_id, -1]) # process and the node will execute the job
+    # init the bfs
     n_list = p_tree.root
     n_visited = {}
     for n in p_tree.nodes:
@@ -81,19 +85,19 @@ def write_mpi(p_tree, num_proc):
         node = n_list.pop()
         if node.son:
             for c in node.son:
-                if n_visited[c.proc_id] == False:
+                if n_visited[c.proc_id] == False and c not in n_list:
                     print c
-                    if c not in n_list:
-                        n_list.append(c)
+                    n_list.append(c)
+                    cue.append([c.proc_id, -1])
                     n_visited[c.proc_id] = True
-    return mpi_script
+    return cue
 
 def gen_mpi(json, num_proc):
     """ Generate all the stuff needed for the paralallelization """
     process_tree = build_tree(json)
     process_tree.compute_son()
     print process_tree.root
-    mpi_script = write_mpi(process_tree, num_proc)
+    process_tree.cue = build_cue(process_tree, num_proc)
     process_tree.save(c.SERIAL_FILE)
 
 

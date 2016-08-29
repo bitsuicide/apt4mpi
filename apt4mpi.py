@@ -2,6 +2,7 @@
 
 import sys
 import os
+import shutil
 import json
 import bash_writer as bash
 import mpi_generator as mpi
@@ -24,8 +25,10 @@ if __name__ == "__main__":
     while dir_cr == False:
         i += 1
         try:
-            os.mkdir(new_folder)
-            os.chdir(new_folder)
+            os.mkdir(new_folder) # create new dir
+            shutil.copy(c.MPI_FILE, new_folder) # copy mpi file to new dir
+            shutil.copy(c.DS_FILE, new_folder) # copy data structure to new dir
+            os.chdir(new_folder) # move to new dir
         except OSError:
             new_folder = "{}_{}_api4mpi".format(job_name, i) 
             continue
@@ -42,6 +45,7 @@ if __name__ == "__main__":
     # generate new mpi4py file
     num_proc = int(json_data["job_options"]["chunks"]) * int(json_data["job_options"]["mpi_procs"])
     mpi.gen_mpi(json_data["commands"], num_proc)
+
     # execute qsub command
     cmd = "qsub {}".format(c.BASH_FILE)
     try:

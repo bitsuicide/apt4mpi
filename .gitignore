@@ -94,4 +94,7 @@ example/
 #json
 *.json
 
+#serial
+*.p
+
 .DS_Store

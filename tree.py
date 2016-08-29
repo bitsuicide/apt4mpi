@@ -1,4 +1,4 @@
-""" Tree data class """
+""" Dag data class """
 
 import pickle
 
@@ -13,6 +13,7 @@ class Options:
         return "{}, Dynamic: {}".format(self.opt_list, self.dynamic)
 
     def set_doption(self, io_type, d_val):
+        """ Set dynamic option """
         if dynamic:
             index = io_index[io_type]
             if index != 0:
@@ -23,6 +24,7 @@ class Options:
             raise Exception("It is possible to set a dynamic value only if the obj is dynamic")
 
     def get_doption(self, io_type):
+        """ Gey dynamic option """
         if dynamic:
             index = io_index[io_type]
             if index != 0:
@@ -31,13 +33,16 @@ class Options:
             raise Exception("It is possible to set a dynamic value only if the obj is dynamic")
 
     def add_option(self, opt, io_type=""):
+        """ Add standard option """
         self.opt_list.append(opt)
         if io_type:
             self.io_index[io_type] = len(self.opt_list) - 1
 
     def add_doption(self, io_type, d_key=None, d_val=None, regex=None):
+        """ Add dynamic option """
         self.opt_list.append([io_type, d_key, d_val, regex])
         self.io_index[io_type] = len(self.opt_list) - 1
+        self.dynamic = True
 
 class Process:
     """ Process class - Graph node """
@@ -59,15 +64,27 @@ class Process:
                 self.branch_f, self.print_nlist(self.son))    
 
     def print_nlist(self, l):
+        """ Print in a readable style process in a list """
         t_list = []
         for e in l:
             t_list.append(e.proc_id)
         return t_list
 
+    def is_ready(self):
+        """ Check if a process is ready to execute """
+        if not self.father: # a node without father
+            return True
+        else:
+            for f in selfself.father:
+                if f.status == False:
+                    return False
+            return True
+
 class Tree:
     def __init__(self, root=None, nodes=None):
         self.nodes = nodes
         self.root = root
+        self.cue = []
 
     def compute_son(self):
         """ Generate the son list for every nodes """
