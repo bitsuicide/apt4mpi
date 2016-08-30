@@ -7,46 +7,51 @@ class Options:
     def __init__(self):
         self.opt_list = []
         self.dynamic = False
-        self.io_index = {"input" : 0, "output" : 0}
+        self.io_index = {"input" : [], "output" : []}
 
     def __str__(self):
         return "{}, Dynamic: {}".format(self.opt_list, self.dynamic)
 
-    def set_doption(self, io_type, d_val):
-        """ Set dynamic option """
-        if dynamic:
-            index = io_index[io_type]
-            if index != 0:
-                opt_list[index][2] = d_val
-            else:
-                raise AttributeError
-        else:
-            raise Exception("It is possible to set a dynamic value only if the obj is dynamic")
+    def set_io_option(self, io_type, d_val):
+        """ Set io option """
+        index = self.io_index[io_type]
+        if index:
+            for io in index:
+                if self.dynamic:
+                    path = 2
+                elif len(self.opt_list[io]) == 1:
+                    path = len(self.opt_list[io]) - 1
+                if not self.opt_list[io][path]:
+                    self.opt_list[io][path] = d_val
 
-    def get_doption(self, io_type):
-        """ Gey dynamic option """
-        if dynamic:
-            index = io_index[io_type]
-            if index != 0:
-                return opt_list[index]
-        else:
-            raise Exception("It is possible to set a dynamic value only if the obj is dynamic")
+    def get_io_option(self, io_type):
+        """ Get io option """
+        index = self.io_index[io_type]
+        io_list = []
+        if index:
+            for io in index:
+                if self.dynamic:
+                    path = 2
+                elif len(self.opt_list[io]) == 1:
+                    path = len(self.opt_list[io]) - 1
+                io_list.append(self.opt_list[io][path])
+        return io_list 
 
     def add_option(self, opt, io_type=""):
         """ Add standard option """
         self.opt_list.append(opt)
         if io_type:
-            self.io_index[io_type] = len(self.opt_list) - 1
+            self.io_index[io_type].append(len(self.opt_list) - 1)
 
     def add_doption(self, io_type, d_key=None, d_val=None, regex=None):
         """ Add dynamic option """
         self.opt_list.append([io_type, d_key, d_val, regex])
-        self.io_index[io_type] = len(self.opt_list) - 1
+        self.io_index[io_type].append(len(self.opt_list) - 1)
         self.dynamic = True
 
 class Process:
     """ Process class - Graph node """
-    def __init__(self, name, proc_id, options, branch_f, father):
+    def __init__(self, name="", proc_id="", options=None, branch_f=1, father=None):
         self.name = name
         self.proc_id = proc_id 
         self.options = options
@@ -75,7 +80,7 @@ class Process:
         if not self.father: # a node without father
             return True
         else:
-            for f in selfself.father:
+            for f in self.father:
                 if f.status == False:
                     return False
             return True

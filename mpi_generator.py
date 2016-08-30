@@ -31,7 +31,7 @@ def build_tree(json):
                     #print len(opt)
                     if len(opt) == 1:
                         if "key" in opt or "value" in opt: # only key or filepath
-                            options.add_option([opt.keys()[0]])
+                            options.add_option([opt[opt.keys()[0]]])
                         elif "type" in opt: # input/output (dynamic)
                             options.add_doption(opt["type"]) 
                     elif len(opt) == 2:
@@ -71,7 +71,7 @@ def build_tree(json):
     return process_tree
 
 def build_cue(p_tree, num_proc):
-    """ Write the mpi file """
+    """ Build the cue and set the io """
     # init the cue
     cue = []
     for n in p_tree.root:
@@ -84,19 +84,28 @@ def build_cue(p_tree, num_proc):
     while n_list:
         node = n_list.pop()
         if node.son:
-            for c in node.son:
-                if n_visited[c.proc_id] == False and c not in n_list:
-                    print c
-                    n_list.append(c)
-                    cue.append([c.proc_id, -1])
-                    n_visited[c.proc_id] = True
+            for s in node.son:
+                if n_visited[s.proc_id] == False and s not in n_list:
+                    # cue and bfs
+                    print s
+                    n_list.append(s)
+                    cue.append([s.proc_id, -1])
+                    n_visited[s.proc_id] = True
+                    # io
+                    for f in s.father:
+                        options = f.options
+                        out = options.get_io_option("output")
+                        if out:
+                            for o in out:
+                                s.options.set_io_option("input", o)
+                                print s.options.opt_list
     return cue
 
 def gen_mpi(json, num_proc):
-    """ Generate all the stuff needed for the paralallelization """
+    """ Generate all the stuff needed for the parallelization """
     process_tree = build_tree(json)
     process_tree.compute_son()
-    print process_tree.root
+    print tree.Process().print_nlist(process_tree.root)
     process_tree.cue = build_cue(process_tree, num_proc)
     process_tree.save(c.SERIAL_FILE)
 

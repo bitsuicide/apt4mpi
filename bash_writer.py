@@ -55,7 +55,8 @@ def gen_bash(json):
     sh_script = "{}\n".format(c.BASH)
     sh_script += gen_pbs(json["job_options"])
     sh_script += "cd {}\n\n".format(c.DATA_DIR)
-    sh_script += gen_module(json["modules"])
+    if "modules" in json: # modules is not mandatory
+        sh_script += gen_module(json["modules"])
     sh_script += gen_mpicmd()
     return sh_script
 

@@ -41,7 +41,7 @@ if __name__ == "__main__":
     qsub_script.close()
     # set execute permission
     perm = os.stat(c.BASH_FILE)
-    os.chmod(c.BASH_FILE, perm.st_mode | 0111)
+    os.chmod(c.BASH_FILE, perm.st_mode | 0111) # chmod +x
     # generate new mpi4py file
     num_proc = int(json_data["job_options"]["chunks"]) * int(json_data["job_options"]["mpi_procs"])
     mpi.gen_mpi(json_data["commands"], num_proc)

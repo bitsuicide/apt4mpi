@@ -48,6 +48,7 @@ def gen_command(process):
     for o in process.options.opt_list:
         opt = ""
         for el in o:
+            print el
             if el and el != "input" and el != "output":
                 opt += "{} ".format(el)
         cmd += opt
@@ -63,7 +64,8 @@ tags = enum("DONE", "EXIT", "START")
 if __name__ == '__main__':
     if rank == 0: # master 
         print("I'm the master")
-        data = pickle.load(open("./custom_pipeline_api4mpi/data.p", "rb"))
+        #data = pickle.load(open("./custom_pipeline_api4mpi/data.p", "rb"))
+        data = pickle.load(open("data.p", "rb"))
         node_status = [False for i in range(size - 1)]
         dispatch(data, node_status)
         n_job = len(data.cue) # total job to do
@@ -94,5 +96,3 @@ if __name__ == '__main__':
                 comm.send(job.proc_id, dest=0, tag=tags.DONE)
             elif tag == tags.EXIT:
                 break
-
-        comm.send(None, dest=0, tag=tags.EXIT)
