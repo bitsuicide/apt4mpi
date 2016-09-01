@@ -11,6 +11,7 @@ def build_tree(json):
         branch_f = 1
         father = []
         options = tree.Options()
+        redirect = []
         for elem in cmd:
             if elem == "id":
                 proc_id = cmd[elem]
@@ -38,7 +39,7 @@ def build_tree(json):
                         if "key" in opt and "value" in opt: # key + value
                             options.add_option([opt["key"], opt["value"]]) 
                         elif "key" in opt and "type" in opt: # key + type (dynamic)
-                            options.add_doption(opt["type"], opt["key"]) 
+                            options.add_doption(opt["type"], d_key=opt["key"]) 
                         elif "value" in opt and "type" in opt: # value + type
                             options.add_option([opt["value"]], io_type=opt["type"])
                         elif "type" in opt and "regex" in opt: # type + regex (dynamic)
@@ -50,6 +51,14 @@ def build_tree(json):
                             options.add_doption(opt["type"], opt["key"], regex=opt["regex"])
                         elif "value" in opt and "type" in opt and "regex" in opt: # value + type + regex (dynamic)
                             options.add_doption(opt["type"], value=opt["value"], regex=opt["regex"])
+            elif elem == "redirect":
+                for opt in cmd[elem]:
+                    if opt["type"] == "stdout" or opt["type"] == "stderr" or opt["type"] == "stdout|stderr":
+                        redirect.append((opt["type"], opt["file"]))
+                        if opt["type"] == "stdout":
+                            options.io_index["output"].append("redirect")
+        if redirect: # there is redirect option
+            options.redirect = redirect
         if proc_id == "": # generate new id 
             proc_id = "{}_{}".format(name, id_count)
             id_count += 1
@@ -91,7 +100,7 @@ def build_cue(p_tree, num_proc):
                     n_list.append(s)
                     cue.append([s.proc_id, -1])
                     n_visited[s.proc_id] = True
-                    # io
+                    # set the io
                     for f in s.father:
                         options = f.options
                         out = options.get_io_option("output")
@@ -108,5 +117,3 @@ def gen_mpi(json, num_proc):
     print tree.Process().print_nlist(process_tree.root)
     process_tree.cue = build_cue(process_tree, num_proc)
     process_tree.save(c.SERIAL_FILE)
-
-

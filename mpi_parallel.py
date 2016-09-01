@@ -5,11 +5,22 @@ import pickle
 from mpi4py import MPI
 import subprocess
 import os
+import glob
 
 comm = MPI.COMM_WORLD   # get MPI communicator object
 size = comm.size        # total number of processes
 rank = comm.rank        # rank of this process
 status = MPI.Status()   # get MPI status object
+
+def find_file(regex):
+    """ Find all files that match with the regex """
+    f_list = glob.glob(regex)
+    if len(f_list) == 1:
+        return f_list[0]
+    elif len(f_list) > 1:
+        return f_list
+    else:
+        raise Exception("There is no output file valid for this job")
 
 def dispatch(data, node_status):
     """ Check if there is a free comp node and send the job to do """
@@ -77,6 +88,14 @@ if __name__ == '__main__':
                 node_status[source-1] = False
                 print("A new msg from {} with tag {} and value {}".format(source, tag, msg))
                 j_executed = data.nodes[msg]
+                # check if the job sons need to find the i/o
+                for s in j_executed.son:
+                    job_opt = s.options
+                    if job_opt.regex[0]: # the job has a regex
+                        for r in job_opt.regex[1]:
+                            option = job_opt.opt_list[r]
+                            file_list = find_file(option[3]) # find file that match with the regex
+                            job_opt.set_io_option(option[0], file_list) # set the result
                 j_executed.status = True
                 remove_job(data, j_executed)
                 n_job -= 1
@@ -89,8 +108,20 @@ if __name__ == '__main__':
             tag = status.Get_tag()  
             if tag == tags.START: # there is a new job to do
                 cmd = "sleep {}".format(rank*3)
-                proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+                proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
                 proc.wait()
+                redirect = job.options.redirect
+                if redirect: # it is a redirect process 
+                    for r in redirect: # writing the output or/and the error file
+                        file = open(r[1], "w")
+                        if r[0] == "stdout":
+                            out = proc.stdout.read()
+                        elif r[0] == "stderr":
+                            out = proc.stderr.read()
+                        elif r[0] == "stdout|stderr":
+                            out = proc.stdout.read() + proc.stderr.read()
+                        file.write(out)
+                        file.close()
                 print("Node {}: {}".format(rank, job.proc_id))
                 print gen_command(job)
                 comm.send(job.proc_id, dest=0, tag=tags.DONE)

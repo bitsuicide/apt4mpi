@@ -7,10 +7,12 @@ class Options:
     def __init__(self):
         self.opt_list = []
         self.dynamic = False
+        self.regex = [False, []]
         self.io_index = {"input" : [], "output" : []}
+        self.redirect = []
 
     def __str__(self):
-        return "{}, Dynamic: {}".format(self.opt_list, self.dynamic)
+        return "{}, Dynamic: {} Regex: {}".format(self.opt_list, self.dynamic, self.regex)
 
     def set_io_option(self, io_type, d_val):
         """ Set io option """
@@ -30,11 +32,16 @@ class Options:
         io_list = []
         if index:
             for io in index:
-                if self.dynamic:
+                if self.dynamic and len(self.opt_list[io]) == 4:
                     path = 2
-                elif len(self.opt_list[io]) == 1:
+                elif len(self.opt_list[io]) >= 1:
                     path = len(self.opt_list[io]) - 1
-                io_list.append(self.opt_list[io][path])
+                if io != "redirect":
+                    io_list.append(self.opt_list[io][path])
+                else:
+                    for r in self.redirect:
+                        if r[0] == "stdout":
+                            io_list.append(r[1])
         return io_list 
 
     def add_option(self, opt, io_type=""):
@@ -48,6 +55,9 @@ class Options:
         self.opt_list.append([io_type, d_key, d_val, regex])
         self.io_index[io_type].append(len(self.opt_list) - 1)
         self.dynamic = True
+        if regex:
+            self.regex[0] = True
+            self.regex[1].append(len(self.opt_list) - 1)
 
 class Process:
     """ Process class - Graph node """
