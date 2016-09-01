@@ -111,6 +111,7 @@ if __name__ == '__main__':
                 proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
                 proc.wait()
                 redirect = job.options.redirect
+                """
                 if redirect: # it is a redirect process 
                     for r in redirect: # writing the output or/and the error file
                         file = open(r[1], "w")
@@ -122,6 +123,7 @@ if __name__ == '__main__':
                             out = proc.stdout.read() + proc.stderr.read()
                         file.write(out)
                         file.close()
+                """
                 print("Node {}: {}".format(rank, job.proc_id))
                 print gen_command(job)
                 comm.send(job.proc_id, dest=0, tag=tags.DONE)

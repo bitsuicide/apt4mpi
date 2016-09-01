@@ -12,7 +12,7 @@ class Options:
         self.redirect = []
 
     def __str__(self):
-        return "{}, Dynamic: {} Regex: {}".format(self.opt_list, self.dynamic, self.regex)
+        return "{}, Dynamic: {} Regex: {} Redirect: {}".format(self.opt_list, self.dynamic, self.regex, self.redirect)
 
     def set_io_option(self, io_type, d_val):
         """ Set io option """
@@ -23,8 +23,9 @@ class Options:
                     path = 2
                 elif len(self.opt_list[io]) == 1:
                     path = len(self.opt_list[io]) - 1
-                if not self.opt_list[io][path]:
+                if self.opt_list[io][path] == None:
                     self.opt_list[io][path] = d_val
+                    break
 
     def get_io_option(self, io_type):
         """ Get io option """
@@ -32,15 +33,15 @@ class Options:
         io_list = []
         if index:
             for io in index:
-                if self.dynamic and len(self.opt_list[io]) == 4:
-                    path = 2
-                elif len(self.opt_list[io]) >= 1:
-                    path = len(self.opt_list[io]) - 1
                 if io != "redirect":
+                    if self.dynamic and len(self.opt_list[io]) == 4:
+                        path = 2
+                    elif len(self.opt_list[io]) >= 1:
+                        path = len(self.opt_list[io]) - 1
                     io_list.append(self.opt_list[io][path])
                 else:
                     for r in self.redirect:
-                        if r[0] == "stdout":
+                        if r[0] == "stdout" or r[0] == "stdout|stderr":
                             io_list.append(r[1])
         return io_list 
 

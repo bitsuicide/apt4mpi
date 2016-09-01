@@ -55,7 +55,7 @@ def build_tree(json):
                 for opt in cmd[elem]:
                     if opt["type"] == "stdout" or opt["type"] == "stderr" or opt["type"] == "stdout|stderr":
                         redirect.append((opt["type"], opt["file"]))
-                        if opt["type"] == "stdout":
+                        if opt["type"] == "stdout" or opt["type"] == "stdout|stderr":
                             options.io_index["output"].append("redirect")
         if redirect: # there is redirect option
             options.redirect = redirect
@@ -96,7 +96,6 @@ def build_cue(p_tree, num_proc):
             for s in node.son:
                 if n_visited[s.proc_id] == False and s not in n_list:
                     # cue and bfs
-                    print s
                     n_list.append(s)
                     cue.append([s.proc_id, -1])
                     n_visited[s.proc_id] = True
@@ -107,7 +106,7 @@ def build_cue(p_tree, num_proc):
                         if out:
                             for o in out:
                                 s.options.set_io_option("input", o)
-                                print s.options.opt_list
+                    print s
     return cue
 
 def gen_mpi(json, num_proc):
