@@ -88,14 +88,21 @@ if __name__ == '__main__':
                 node_status[source-1] = False
                 print("A new msg from {} with tag {} and value {}".format(source, tag, msg))
                 j_executed = data.nodes[msg]
-                # check if the job sons need to find the i/o
+                # regex handler
+                """
                 for s in j_executed.son:
                     job_opt = s.options
                     if job_opt.regex[0]: # the job has a regex
                         for r in job_opt.regex[1]:
                             option = job_opt.opt_list[r]
                             file_list = find_file(option[3]) # find file that match with the regex
-                            job_opt.set_io_option(option[0], file_list) # set the result
+                            lenght_fl = len(file_list)
+                            if lenght_fl == len(j_executed.son):
+                                f = file_list.pop(0)
+                                job_opt.set_io_option(option[0], f) # set the result
+                            else:
+                                job_opt.set_io_option(option[0], file_list)
+                """
                 j_executed.status = True
                 remove_job(data, j_executed)
                 n_job -= 1
@@ -110,8 +117,9 @@ if __name__ == '__main__':
                 cmd = "sleep {}".format(rank*3)
                 proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
                 proc.wait()
-                redirect = job.options.redirect
+                # redirect handler
                 """
+                redirect = job.options.redirect
                 if redirect: # it is a redirect process 
                     for r in redirect: # writing the output or/and the error file
                         file = open(r[1], "w")

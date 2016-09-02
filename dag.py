@@ -1,4 +1,4 @@
-""" Dag data class """
+""" Dag data class and utility """
 
 import pickle
 
@@ -97,6 +97,7 @@ class Process:
             return True
 
 class Dag:
+    """ Process flow data structure """
     def __init__(self, root=None, nodes=None):
         self.nodes = nodes
         self.root = root
