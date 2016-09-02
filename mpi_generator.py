@@ -1,7 +1,7 @@
-import tree 
+import dag 
 import constant as c
 
-def build_tree(json):
+def build_dag(json):
     """ Build three / graph process dependences """ 
     nodes = {}
     root_list = []
@@ -10,7 +10,7 @@ def build_tree(json):
         name = proc_id = ""
         branch_f = 1
         father = []
-        options = tree.Options()
+        options = dag.Options()
         redirect = []
         for elem in cmd:
             if elem == "id":
@@ -50,7 +50,11 @@ def build_tree(json):
                         elif "key" in opt and "type" in opt and "regex" in opt: # key + type + regex (dynamic)
                             options.add_doption(opt["type"], opt["key"], regex=opt["regex"])
                         elif "value" in opt and "type" in opt and "regex" in opt: # value + type + regex (dynamic)
-                            options.add_doption(opt["type"], value=opt["value"], regex=opt["regex"])
+                            options.add_doption(opt["type"], d_val=opt["value"], regex=opt["regex"])
+                    elif len(opt) == 4: 
+                        if "value" in opt and "regex" in opt and "n" in opt and "type" in opt: # value + type + regex + n (dynamic)
+                            options.add_doption(opt["type"], regex=opt["regex"])
+                            branch_f = int(opt["n"])
             elif elem == "redirect":
                 for opt in cmd[elem]:
                     if opt["type"] == "stdout" or opt["type"] == "stderr" or opt["type"] == "stdout|stderr":
@@ -65,30 +69,30 @@ def build_tree(json):
         if branch_f > 1: # process parallelism
             new_proc_id = proc_id
             for i in range(0, branch_f):
-                process = tree.Process(name, new_proc_id, options, branch_f, father)
+                process = dag.Process(name, new_proc_id, options, branch_f, father)
                 nodes[new_proc_id] = process
                 new_proc_id = "{}_{}".format(proc_id, i+2)
                 branch_f = 1
                 if not father:
                     root_list.append(process)
         else:
-            process = tree.Process(name, proc_id, options, branch_f, father)
+            process = dag.Process(name, proc_id, options, branch_f, father)
             nodes[proc_id] = process
             if not father:
                 root_list.append(process)
-    process_tree = tree.Tree(root_list, nodes)
-    return process_tree
+    process_dag = dag.Dag(root_list, nodes)
+    return process_dag
 
-def build_cue(p_tree, num_proc):
+def build_cue(p_dag, num_proc):
     """ Build the cue and set the io """
     # init the cue
     cue = []
-    for n in p_tree.root:
+    for n in p_dag.root:
         cue.append([n.proc_id, -1]) # process and the node will execute the job
     # init the bfs
-    n_list = p_tree.root
+    n_list = p_dag.root
     n_visited = {}
-    for n in p_tree.nodes:
+    for n in p_dag.nodes:
         n_visited[n] = False
     while n_list:
         node = n_list.pop()
@@ -111,8 +115,8 @@ def build_cue(p_tree, num_proc):
 
 def gen_mpi(json, num_proc):
     """ Generate all the stuff needed for the parallelization """
-    process_tree = build_tree(json)
-    process_tree.compute_son()
-    print tree.Process().print_nlist(process_tree.root)
-    process_tree.cue = build_cue(process_tree, num_proc)
-    process_tree.save(c.SERIAL_FILE)
+    process_dag = build_dag(json)
+    process_dag.compute_son()
+    print dag.Process().print_nlist(process_dag.root)
+    process_dag.cue = build_cue(process_dag, num_proc)
+    process_dag.save(c.SERIAL_FILE)

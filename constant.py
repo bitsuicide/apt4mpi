@@ -2,7 +2,7 @@
 
 BASH_FILE = "launch_job.sh"
 MPI_FILE = "mpi_parallel.py"
-DS_FILE = "tree.py"
+DS_FILE = "dag.py"
 SERIAL_FILE = "data.p"
 OUTPUT_FOLDER = "output"
 PBS_PREFIX = "#PBS"

@@ -61,7 +61,7 @@ class Options:
             self.regex[1].append(len(self.opt_list) - 1)
 
 class Process:
-    """ Process class - Graph node """
+    """ Process class - DAG node """
     def __init__(self, name="", proc_id="", options=None, branch_f=1, father=None):
         self.name = name
         self.proc_id = proc_id 
@@ -73,10 +73,10 @@ class Process:
 
     def __str__(self):
         if self.father != None:
-            return "Name: {}, Id: {}, Options: {}, branch_f level: {}, Father: {} Sons: {}".format(self.name, self.proc_id, self.options, 
+            return "Name: {}, Id: {}, Options: {}, branch_f level: {}, Fathers: {} Sons: {}".format(self.name, self.proc_id, self.options, 
                 self.branch_f, self.print_nlist(self.father), self.print_nlist(self.son))
         else:
-            return "Name: {}, id: {}, Options: {}, branch_f level: {}, Father: None Sons: {}".format(self.name, self.proc_id, self.options, 
+            return "Name: {}, id: {}, Options: {}, branch_f level: {}, Fathers: None Sons: {}".format(self.name, self.proc_id, self.options, 
                 self.branch_f, self.print_nlist(self.son))    
 
     def print_nlist(self, l):
@@ -96,7 +96,7 @@ class Process:
                     return False
             return True
 
-class Tree:
+class Dag:
     def __init__(self, root=None, nodes=None):
         self.nodes = nodes
         self.root = root

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import tree
+import dag
 import pickle
 from mpi4py import MPI
 import subprocess
@@ -20,7 +20,7 @@ def find_file(regex):
     elif len(f_list) > 1:
         return f_list
     else:
-        raise Exception("There is no output file valid for this job")
+        raise Exception("There is no valid output file for this job")
 
 def dispatch(data, node_status):
     """ Check if there is a free comp node and send the job to do """
@@ -59,7 +59,7 @@ def gen_command(process):
     for o in process.options.opt_list:
         opt = ""
         for el in o:
-            print el
+            #print el
             if el and el != "input" and el != "output":
                 opt += "{} ".format(el)
         cmd += opt
