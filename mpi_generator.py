@@ -21,7 +21,10 @@ def build_dag(json):
                 branch_f = int(cmd[elem])
             elif elem == "after":
                 for i in range(len(cmd[elem])):
-                    t_node = nodes[cmd[elem][i]]
+                    try:
+                        t_node = nodes[cmd[elem][i]]
+                    except:
+                        raise Exception("{} There is a problem with the id of process {}".format(c.ERROR_PREFIX, name))
                     father.append(t_node)
                     if t_node.branch_f > 1:
                         for i in range(0, t_node.branch_f - 1):
@@ -53,13 +56,14 @@ def build_dag(json):
                             options.add_doption(opt["type"], d_val=opt["value"], regex=opt["regex"])
                     elif len(opt) == 4: 
                         if "value" in opt and "regex" in opt and "n" in opt and "type" in opt: # value + type + regex + n (dynamic)
-                            options.add_doption(opt["type"], regex=opt["regex"])
+                            options.add_doption(opt["type"], d_val=opt["value"], regex=opt["regex"])
                             branch_f = int(opt["n"])
             elif elem == "redirect":
                 for opt in cmd[elem]:
-                    if opt["type"] == "stdout" or opt["type"] == "stderr" or opt["type"] == "stdout|stderr":
-                        redirect.append((opt["type"], opt["file"]))
-                        if opt["type"] == "stdout" or opt["type"] == "stdout|stderr":
+                    if opt["type"] == "stdout" or opt["type"] == "stderr" or opt["type"] == "stdout|stderr" or opt["type"] == "stderr|stdout":
+                        if "file" in cmd[elem]:
+                            redirect.append((opt["type"], opt["file"]))
+                        if opt["type"] != "stderr":
                             options.io_index["output"].append("redirect")
         if redirect: # there is redirect option
             options.redirect = redirect
@@ -69,6 +73,8 @@ def build_dag(json):
         if branch_f > 1: # process parallelism
             new_proc_id = proc_id
             for i in range(0, branch_f):
+                if not options.io_index["output"] and not options.redirect: # no output in a process
+                    print("{} The process {} has no output defined".format(c.WARNING_PREFIX, proc_id))
                 process = dag.Process(name, new_proc_id, options, branch_f, father)
                 nodes[new_proc_id] = process
                 new_proc_id = "{}_{}".format(proc_id, i+2)
@@ -76,6 +82,8 @@ def build_dag(json):
                 if not father:
                     root_list.append(process)
         else:
+            if not options.io_index["output"] and not options.redirect: # no output in a process
+                print("{} The process {} has no output defined".format(c.WARNING_PREFIX, proc_id))
             process = dag.Process(name, proc_id, options, branch_f, father)
             nodes[proc_id] = process
             if not father:
@@ -87,6 +95,7 @@ def build_cue(p_dag, num_proc):
     """ Build the cue and set the io """
     # init the cue
     cue = []
+    leaves_o = 0
     for n in p_dag.root:
         cue.append([n.proc_id, -1]) # process and the node will execute the job
     # init the bfs
@@ -99,18 +108,28 @@ def build_cue(p_dag, num_proc):
         if node.son:
             for s in node.son:
                 if n_visited[s.proc_id] == False and s not in n_list:
+                    if not s.son and not s.options.io_index["output"]: # leaves without output
+                        leaves_o += 1
                     # cue and bfs
                     n_list.append(s)
                     cue.append([s.proc_id, -1])
                     n_visited[s.proc_id] = True
                     # set the io
                     for f in s.father:
+                        # add new controls on output here
                         options = f.options
                         out = options.get_io_option("output")
                         if out:
                             for o in out:
-                                s.options.set_io_option("input", o)
+                                new_io = s.options.set_io_option("input", o)
+                                if new_io == False:
+                                    print("{} The process {} has more output than sons input".format(c.WARNING_PREFIX, f.proc_id))
+                                    break
                     print s
+                    if s.options.available_input == True:
+                        raise Exception("{} The process {} has one or more input without a path".format(c.ERROR_PREFIX, s.proc_id))
+    if leaves_o > 1: # leaves warning
+        print("{} Is it possible a multiple writing on the stdout".format(c.WARNING_PREFIX))
     return cue
 
 def gen_mpi(json, num_proc):

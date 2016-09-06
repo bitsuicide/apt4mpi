@@ -51,4 +51,4 @@ if __name__ == "__main__":
     try:
         subprocess.call(cmd)
     except OSError:
-        print("It is not possible to complete the task: Command error")
+        print("{} Command Error".format(c.ERROR_PREFIX))

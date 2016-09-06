@@ -25,7 +25,8 @@ class Options:
                     path = len(self.opt_list[io]) - 1
                 if self.opt_list[io][path] == None:
                     self.opt_list[io][path] = d_val
-                    break
+                    return True
+        return False
 
     def get_io_option(self, io_type):
         """ Get io option """
@@ -59,6 +60,18 @@ class Options:
         if regex:
             self.regex[0] = True
             self.regex[1].append(len(self.opt_list) - 1)
+
+    def available_input(self):
+        """ Check if there are some input without path """
+        if self.dynamic != True or self.redirect[0] != True:
+            for i in self.io_index["input"]:
+                c_input = self.opt_list[i]
+                path = len(self.opt_list[io]) - 1
+                if self.opt_list[io][path] == None:
+                    return True
+            return False 
+        else: # Dynamic and redirect process is not checkable
+            return None
 
 class Process:
     """ Process class - DAG node """

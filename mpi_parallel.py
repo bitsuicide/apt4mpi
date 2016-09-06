@@ -57,11 +57,13 @@ def gen_command(process):
     """ Generate the process command from the options """
     cmd = "{} ".format(process.name)
     for o in process.options.opt_list:
+        i = 0
         opt = ""
-        for el in o:
-            #print el
+        for el in o: 
             if el and el != "input" and el != "output":
+                if i != 3:
                 opt += "{} ".format(el)
+            i += 1
         cmd += opt
     return cmd
 
@@ -89,20 +91,23 @@ if __name__ == '__main__':
                 print("A new msg from {} with tag {} and value {}".format(source, tag, msg))
                 j_executed = data.nodes[msg]
                 # regex handler
-                """
+                i = 0
                 for s in j_executed.son:
                     job_opt = s.options
                     if job_opt.regex[0]: # the job has a regex
-                        for r in job_opt.regex[1]:
-                            option = job_opt.opt_list[r]
-                            file_list = find_file(option[3]) # find file that match with the regex
-                            lenght_fl = len(file_list)
-                            if lenght_fl == len(j_executed.son):
-                                f = file_list.pop(0)
-                                job_opt.set_io_option(option[0], f) # set the result
-                            else:
-                                job_opt.set_io_option(option[0], file_list)
-                """
+                        option = job_opt.opt_list[r]
+                        file_list = find_file(option[3]) # find file that match with the regex
+                        lenght_fl = len(file_list)
+                        if lenght_fl >= len(j_executed.son):
+                            new_io = True
+                            while new_io:  
+                                new_io = job_opt.set_io_option(option[0], file_list[i]) # set the result
+                                if new_io == True:
+                                    i += 1
+                            if lenght_fl >= len(j_executed.son):
+                                print("[WARNING] The process {} has more output than sons input\n".format(j_executed.proc_id))
+                        else:
+                            raise new Exception("[ERROR] The process {} has less output than sons\n".format(j.executed.proc_id))
                 j_executed.status = True
                 remove_job(data, j_executed)
                 n_job -= 1
@@ -129,6 +134,8 @@ if __name__ == '__main__':
                             out = proc.stderr.read()
                         elif r[0] == "stdout|stderr":
                             out = proc.stdout.read() + proc.stderr.read()
+                        elif r[0] == "stderr|stdout":
+                            out = proc.stderr.read() + proc.stdout.read()
                         file.write(out)
                         file.close()
                 """
