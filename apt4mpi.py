@@ -3,7 +3,7 @@
 import sys
 import os
 import shutil
-import json
+import yaml
 import bash_writer as bash
 import mpi_generator as mpi
 import subprocess
@@ -12,12 +12,12 @@ import constant as c
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        raise EnvironmentError("You have to specify the json file")
+        raise EnvironmentError("You have to specify the yaml file")
     else:
-        json_path = sys.argv[1]
-    json_file = open(json_path, "r")
-    json_data = json.load(json_file)
-    job_name = json_data["job_options"]["job_name"]
+        yaml_path = sys.argv[1]
+    yaml_file = open(yaml_path, "r")
+    yaml_data = yaml.load(yaml_file)
+    job_name = yaml_data["job_options"]["job_name"]
     # create new folders
     new_folder = "{}_api4mpi".format(job_name) 
     dir_cr = False
@@ -35,7 +35,7 @@ if __name__ == "__main__":
         dir_cr = True
     os.mkdir(c.OUTPUT_FOLDER)
     # generate new qsub bash file
-    sh_script = bash.gen_bash(json_data)
+    sh_script = bash.gen_bash(yaml_data)
     qsub_script = open(c.BASH_FILE, "w")
     qsub_script.write(sh_script)
     qsub_script.close()
@@ -43,8 +43,8 @@ if __name__ == "__main__":
     perm = os.stat(c.BASH_FILE)
     os.chmod(c.BASH_FILE, perm.st_mode | 0111) # chmod +x
     # generate new mpi4py file
-    num_proc = int(json_data["job_options"]["chunks"]) * int(json_data["job_options"]["mpi_procs"])
-    mpi.gen_mpi(json_data["commands"], num_proc)
+    num_proc = int(yaml_data["job_options"]["chunks"]) * int(yaml_data["job_options"]["mpi_procs"])
+    mpi.gen_mpi(yaml_data["commands"], num_proc)
 
     # execute qsub command
     cmd = "qsub {}".format(c.BASH_FILE)
