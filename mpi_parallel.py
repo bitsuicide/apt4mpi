@@ -11,6 +11,7 @@ comm = MPI.COMM_WORLD   # get MPI communicator object
 size = comm.size        # total number of processes
 rank = comm.rank        # rank of this process
 status = MPI.Status()   # get MPI status object
+log_file = "log.txt"
 
 def find_file(regex):
     """ Find all files that match with the regex """
@@ -20,15 +21,16 @@ def find_file(regex):
     elif len(f_list) > 1:
         return f_list
     else:
-        raise Exception("There is no valid output file for this job")
+        raise Exception("[ERROR] There is no valid output file for this job")
 
-def dispatch(data, node_status):
+def dispatch(data, node_status, log):
     """ Check if there is a free comp node and send the job to do """
     for i in range(len(node_status)):
         if node_status[i] == False:
             job = next_job(data, i+1)
             if job != None: # is available a new job to do
                 comm.send(job, dest=i+1, tag=tags.START) 
+                log.write("[START]\t{}\n".format(job.proc_id))
                 node_status[i] = True
 
 def next_job(data, rank):
@@ -62,7 +64,7 @@ def gen_command(process):
         for el in o: 
             if el and el != "input" and el != "output":
                 if i != 3:
-                opt += "{} ".format(el)
+                    opt += "{} ".format(el)
             i += 1
         cmd += opt
     return cmd
@@ -78,9 +80,10 @@ if __name__ == '__main__':
     if rank == 0: # master 
         print("I'm the master")
         #data = pickle.load(open("./custom_pipeline_api4mpi/data.p", "rb"))
+        log = open(log_file, "w")
         data = pickle.load(open("data.p", "rb"))
         node_status = [False for i in range(size - 1)]
-        dispatch(data, node_status)
+        dispatch(data, node_status, log)
         n_job = len(data.cue) # total job to do
         while n_job >= 1:
             msg = comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
@@ -90,6 +93,7 @@ if __name__ == '__main__':
                 node_status[source-1] = False
                 print("A new msg from {} with tag {} and value {}".format(source, tag, msg))
                 j_executed = data.nodes[msg]
+                log.write("[DONE]\t{}\n".format(j_executed.proc_id))
                 # regex handler
                 i = 0
                 more_out = False
@@ -108,14 +112,15 @@ if __name__ == '__main__':
                             if lenght_fl > len(j_executed.son) and more_out != True:
                                 more_out = True
                         else:
-                            raise new Exception("[ERROR] The process {} has less output than sons\n".format(j.executed.proc_id))
+                            raise Exception("[ERROR] The process {} has less output than sons\n".format(j.executed.proc_id))
                 if more_out:
                     print("[WARNING] The process {} has more output than sons input\n".format(j_executed.proc_id))
                 j_executed.status = True
                 remove_job(data, j_executed)
                 n_job -= 1
-                dispatch(data, node_status)
+                dispatch(data, node_status, log)
         stop_comp()
+        log.close()
     else: # slaves
         print("I'm the node " + str(rank))
         while True:

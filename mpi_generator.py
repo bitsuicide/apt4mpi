@@ -62,7 +62,10 @@ def build_dag(json):
                 for opt in cmd[elem]:
                     if opt["type"] == "stdout" or opt["type"] == "stderr" or opt["type"] == "stdout|stderr" or opt["type"] == "stderr|stdout":
                         if "file" in cmd[elem]:
-                            redirect.append((opt["type"], opt["file"]))
+                            file_path = opt["file"]
+                        else: # automatic generation redirect file path
+                            file_path = "{}_{}_out.txt".format(name, id_count)
+                        redirect.append((opt["type"], file_path))
                         if opt["type"] != "stderr":
                             options.io_index["output"].append("redirect")
         if redirect: # there is redirect option
