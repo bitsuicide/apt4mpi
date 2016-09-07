@@ -92,6 +92,7 @@ if __name__ == '__main__':
                 j_executed = data.nodes[msg]
                 # regex handler
                 i = 0
+                more_out = False
                 for s in j_executed.son:
                     job_opt = s.options
                     if job_opt.regex[0]: # the job has a regex
@@ -104,10 +105,12 @@ if __name__ == '__main__':
                                 new_io = job_opt.set_io_option(option[0], file_list[i]) # set the result
                                 if new_io == True:
                                     i += 1
-                            if lenght_fl >= len(j_executed.son):
-                                print("[WARNING] The process {} has more output than sons input\n".format(j_executed.proc_id))
+                            if lenght_fl > len(j_executed.son) and more_out != True:
+                                more_out = True
                         else:
                             raise new Exception("[ERROR] The process {} has less output than sons\n".format(j.executed.proc_id))
+                if more_out:
+                    print("[WARNING] The process {} has more output than sons input\n".format(j_executed.proc_id))
                 j_executed.status = True
                 remove_job(data, j_executed)
                 n_job -= 1

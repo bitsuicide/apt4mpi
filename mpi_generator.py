@@ -74,7 +74,7 @@ def build_dag(json):
             new_proc_id = proc_id
             for i in range(0, branch_f):
                 if not options.io_index["output"] and not options.redirect: # no output in a process
-                    print("{} The process {} has no output defined".format(c.WARNING_PREFIX, proc_id))
+                    print("{} The process {} has no output defined".format(c.WARNING_PREFIX, new_proc_id))
                 process = dag.Process(name, new_proc_id, options, branch_f, father)
                 nodes[new_proc_id] = process
                 new_proc_id = "{}_{}".format(proc_id, i+2)
@@ -115,6 +115,8 @@ def build_cue(p_dag, num_proc):
                     cue.append([s.proc_id, -1])
                     n_visited[s.proc_id] = True
                     # set the io
+                    father_l = len(s.father)
+                    i = 0
                     for f in s.father:
                         # add new controls on output here
                         options = f.options
@@ -122,9 +124,10 @@ def build_cue(p_dag, num_proc):
                         if out:
                             for o in out:
                                 new_io = s.options.set_io_option("input", o)
-                                if new_io == False:
+                                if new_io == False and i < father_l - 1:
                                     print("{} The process {} has more output than sons input".format(c.WARNING_PREFIX, f.proc_id))
                                     break
+                        i += 1
                     print s
                     if s.options.available_input == True:
                         raise Exception("{} The process {} has one or more input without a path".format(c.ERROR_PREFIX, s.proc_id))
