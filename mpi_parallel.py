@@ -127,11 +127,10 @@ if __name__ == '__main__':
             job = comm.recv(source=0, tag=MPI.ANY_TAG, status=status)
             tag = status.Get_tag()  
             if tag == tags.START: # there is a new job to do
-                cmd = "sleep {}".format(rank*3)
+                cmd = gen_command(job)
                 proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
                 proc.wait()
                 # redirect handler
-                """
                 redirect = job.options.redirect
                 if redirect: # it is a redirect process 
                     for r in redirect: # writing the output or/and the error file
@@ -146,9 +145,7 @@ if __name__ == '__main__':
                             out = proc.stderr.read() + proc.stdout.read()
                         file.write(out)
                         file.close()
-                """
                 print("Node {}: {}".format(rank, job.proc_id))
-                print gen_command(job)
                 comm.send(job.proc_id, dest=0, tag=tags.DONE)
             elif tag == tags.EXIT:
                 break

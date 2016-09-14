@@ -49,6 +49,10 @@ if __name__ == "__main__":
     # execute qsub command
     cmd = "qsub {}".format(c.BASH_FILE)
     try:
-        subprocess.call(cmd)
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        proc.wait()
+        print("Output: {}".format(proc.stdout.read()))
+        print("Error: {}".format(proc.stderr.read()))
     except OSError:
+        print(proc.stderr.read())
         print("{} Command Error".format(c.ERROR_PREFIX))

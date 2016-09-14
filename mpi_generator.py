@@ -24,7 +24,8 @@ def build_dag(json):
                     try:
                         t_node = nodes[cmd[elem][i]]
                     except:
-                        raise Exception("{} There is a problem with the id of process {}".format(c.ERROR_PREFIX, name))
+                        print nodes
+                        raise Exception("{} There is a problem with the id of {} process".format(c.ERROR_PREFIX, name))
                     father.append(t_node)
                     if t_node.branch_f > 1:
                         for i in range(0, t_node.branch_f - 1):
