@@ -91,6 +91,7 @@ ENV/
 
 example/
 json/
+bio/
 
 #json
 *.json

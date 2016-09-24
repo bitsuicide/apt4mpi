@@ -40,7 +40,10 @@ def gen_module(yaml_mod):
         autoload = ""
         if "autoload" in mod and mod["autoload"] != "False":
             autoload = " autoload"
-        sh_temp += "{}{} {}/{} \n".format(c.MODULE_PREFIX, autoload, mod["name"], mod["version"]) 
+        if "version" not in mod:
+            sh_temp += "{}{} {} \n".format(c.MODULE_PREFIX, autoload, mod["name"])
+        else:
+            sh_temp += "{}{} {}/{} \n".format(c.MODULE_PREFIX, autoload, mod["name"], mod["version"]) 
     return sh_temp
 
 def gen_mpicmd():

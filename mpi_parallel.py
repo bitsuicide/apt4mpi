@@ -78,7 +78,7 @@ tags = enum("DONE", "EXIT", "START")
 
 if __name__ == '__main__':
     if rank == 0: # master 
-        print("I'm the master")
+        #print("I'm the master")
         #data = pickle.load(open("./custom_pipeline_api4mpi/data.p", "rb"))
         log = open(log_file, "w")
         data = pickle.load(open("data.p", "rb"))
@@ -100,19 +100,20 @@ if __name__ == '__main__':
                 for s in j_executed.son:
                     job_opt = s.options
                     if job_opt.regex[0]: # the job has a regex
-                        option = job_opt.opt_list[r]
-                        file_list = find_file(option[3]) # find file that match with the regex
-                        lenght_fl = len(file_list)
-                        if lenght_fl >= len(j_executed.son):
-                            new_io = True
-                            while new_io:  
-                                new_io = job_opt.set_io_option(option[0], file_list[i]) # set the result
-                                if new_io == True:
-                                    i += 1
-                            if lenght_fl > len(j_executed.son) and more_out != True:
-                                more_out = True
-                        else:
-                            raise Exception("[ERROR] The process {} has less output than sons\n".format(j.executed.proc_id))
+                        for r in job_opt.regex[1]:
+                            option = job_opt.opt_list[r]
+                            file_list = find_file(option[3]) # find file that match with the regex
+                            lenght_fl = len(file_list)
+                            if lenght_fl >= len(j_executed.son):
+                                new_io = True
+                                while new_io:  
+                                    new_io = job_opt.set_io_option(option[0], file_list[i]) # set the result
+                                    if new_io == True:
+                                        i += 1
+                                if lenght_fl > len(j_executed.son) and more_out != True:
+                                    more_out = True
+                            else:
+                                raise Exception("[ERROR] The process {} has less output than sons\n".format(j.executed.proc_id))
                 if more_out:
                     print("[WARNING] The process {} has more output than sons input\n".format(j_executed.proc_id))
                 j_executed.status = True
@@ -122,7 +123,7 @@ if __name__ == '__main__':
         stop_comp()
         log.close()
     else: # slaves
-        print("I'm the node " + str(rank))
+        #print("I'm the node " + str(rank))
         while True:
             job = comm.recv(source=0, tag=MPI.ANY_TAG, status=status)
             tag = status.Get_tag()  
@@ -134,7 +135,7 @@ if __name__ == '__main__':
                 redirect = job.options.redirect
                 if redirect: # it is a redirect process 
                     for r in redirect: # writing the output or/and the error file
-                        file = open(r[1], "w")
+                        file = open(r[1], "w")  
                         if r[0] == "stdout":
                             out = proc.stdout.read()
                         elif r[0] == "stderr":

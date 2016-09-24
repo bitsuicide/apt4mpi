@@ -33,7 +33,6 @@ if __name__ == "__main__":
             new_folder = "{}_{}_api4mpi".format(job_name, i) 
             continue
         dir_cr = True
-    os.mkdir(c.OUTPUT_FOLDER)
     # generate new qsub bash file
     sh_script = bash.gen_bash(yaml_data)
     qsub_script = open(c.BASH_FILE, "w")

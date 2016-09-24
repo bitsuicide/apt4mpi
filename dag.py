@@ -19,9 +19,9 @@ class Options:
         index = self.io_index[io_type]
         if index:
             for io in index:
-                if self.dynamic:
+                if self.dynamic and len(self.opt_list[io]) == 4:
                     path = 2
-                elif len(self.opt_list[io]) == 1:
+                elif len(self.opt_list[io]) >= 1:
                     path = len(self.opt_list[io]) - 1
                 if self.opt_list[io][path] == None:
                     self.opt_list[io][path] = d_val

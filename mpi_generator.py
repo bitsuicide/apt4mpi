@@ -1,5 +1,15 @@
 import dag 
 import constant as c
+import glob
+import copy
+
+def check_regex(regex, io_type):
+    """ Expand the regex if it is needed """
+    f_list = sorted(glob.glob("../" + regex))
+    branch_f = 1
+    if f_list and len(f_list) > 1 and io_type == "input":
+        branch_f = len(f_list)
+    return f_list, branch_f
 
 def build_dag(json):
     """ Build three / graph process dependences """ 
@@ -12,6 +22,8 @@ def build_dag(json):
         father = []
         options = dag.Options()
         redirect = []
+        input_list = []
+        id_input = 1
         for elem in cmd:
             if elem == "id":
                 proc_id = cmd[elem]
@@ -33,7 +45,6 @@ def build_dag(json):
                             father.append(nodes[f_id])
             elif elem == "options": # handle the different options case
                 for opt in cmd[elem]:
-                    #print len(opt)
                     if len(opt) == 1:
                         if "key" in opt or "value" in opt: # only key or filepath
                             options.add_option([opt[opt.keys()[0]]])
@@ -47,17 +58,46 @@ def build_dag(json):
                         elif "value" in opt and "type" in opt: # value + type
                             options.add_option([opt["value"]], io_type=opt["type"])
                         elif "type" in opt and "regex" in opt: # type + regex (dynamic)
-                            options.add_doption(opt["type"], regex=opt["regex"])
+                            f_list, n_proc = check_regex(opt["regex"], opt["type"])
+                            if branch_f == 1:
+                                branch_f = n_proc
+                            if not f_list:
+                                options.add_doption(opt["type"], regex=opt["regex"])
+                            else:
+                                options.add_option(id_input, io_type=opt["type"]) # value + type
+                                input_list.append([id_input, f_list])
+                                id_input += 1
                     elif len(opt) == 3:
                         if "key" in opt and "value" in opt and "type" in opt: # key + value + type
                             options.add_option([opt["key"], opt["value"]], io_type=opt["type"])
                         elif "key" in opt and "type" in opt and "regex" in opt: # key + type + regex (dynamic)
-                            options.add_doption(opt["type"], opt["key"], regex=opt["regex"])
+                            f_list, n_proc = check_regex(opt["regex"], opt["type"])
+                            if branch_f == 1:
+                                branch_f = n_proc
+                            if not f_list:
+                                options.add_doption(opt["type"], d_key=opt["key"], regex=opt["regex"])
+                            else: # key + value + type
+                                options.add_option([opt["key"], id_input], io_type=opt["type"])
+                                input_list.append([id_input, f_list])
+                                id_input += 1
                         elif "value" in opt and "type" in opt and "regex" in opt: # value + type + regex (dynamic)
-                            options.add_doption(opt["type"], d_val=opt["value"], regex=opt["regex"])
+                            f_list, n_proc = check_regex(opt["regex"], opt["type"])
+                            if branch_f == 1:
+                                branch_f = n_proc
+                            if not f_list:
+                                options.add_doption(opt["type"], d_val=opt["value"], regex=opt["regex"])
+                            else:
+                                options.add_option([id_input], io_type=opt["type"]) # value + type
+                                input_list.append([id_input, f_list])
+                                id_input += 1
                     elif len(opt) == 4: 
                         if "value" in opt and "regex" in opt and "n" in opt and "type" in opt: # value + type + regex + n (dynamic)
-                            options.add_doption(opt["type"], d_val=opt["value"], regex=opt["regex"])
+                            f_list = check_regex(opt["regex"], opt["type"])
+                            if not f_list:
+                                options.add_doption(opt["type"], d_val=opt["value"], regex=opt["regex"])
+                            else: 
+                                options.add_option([f_list.pop()], io_type=opt["type"]) # value + type
+                                input_list.append(f_list)
                             branch_f = int(opt["n"])
             elif elem == "redirect":
                 for opt in cmd[elem]:
@@ -76,13 +116,27 @@ def build_dag(json):
             id_count += 1
         if branch_f > 1: # process parallelism
             new_proc_id = proc_id
+            n_proc = branch_f
+            o_options = copy.deepcopy(options)
             for i in range(0, branch_f):
+                if i == 1:
+                    n_proc = 1
                 if not options.io_index["output"] and not options.redirect: # no output in a process
                     print("{} The process {} has no output defined".format(c.WARNING_PREFIX, new_proc_id))
-                process = dag.Process(name, new_proc_id, options, branch_f, father)
+                # set input from regex
+                if input_list:
+                    j = 0
+                    for o in options.opt_list:
+                        path = len(o) - 1 
+                        if o[path] == input_list[j][0]: # id_input
+                            o[path] = input_list[j][1].pop(0)
+                            j += 1
+                            if j == len(input_list):
+                                break
+                process = dag.Process(name, new_proc_id, options, n_proc, father)
+                options = copy.deepcopy(o_options)
                 nodes[new_proc_id] = process
                 new_proc_id = "{}_{}".format(proc_id, i+2)
-                branch_f = 1
                 if not father:
                     root_list.append(process)
         else:
