@@ -123,12 +123,14 @@ class Dag:
             father = node.father
             f_temp = []
             # compute and add parallels sons
+            """
             for f in father:
                 if f.branch_f > 1:
                     for i in range(0, f.branch_f - 1):
                         f_id = "{}_{}".format(f.proc_id, i+2)
                         f_temp.append(self.nodes[f_id])
             father = father + f_temp
+            """
             for f in father: 
                 if node not in f.son:
                         f.son.append(node)

@@ -2,6 +2,7 @@ import dag
 import constant as c
 import glob
 import copy
+import re
 
 def check_regex(regex, io_type):
     """ Expand the regex if it is needed """
@@ -9,17 +10,43 @@ def check_regex(regex, io_type):
     branch_f = 1
     if f_list and len(f_list) > 1 and io_type == "input":
         branch_f = len(f_list)
-    return f_list, branch_f
+    group = regex_group(regex, f_list)
+    return f_list, branch_f, group
+
+def regex_group(regex, result):
+    """ Build group list """
+    group_n = len([m.start() for m in re.finditer("\*", regex)])
+    regex = regex.replace("*", "(.*)", group_n)
+    find = re.compile(regex)
+    group = [[] for i in range(0, group_n)]
+    for r in result:
+        for i in range(0, group_n):
+            res = find.search(r)
+            group[i].append(res.group(i+1))
+    return group
+
+def replace_group(regex, ind, group):
+    """ Find and replace regex groups """
+    res = re.findall("\$[0-9]", regex)
+    if res:
+        path_temp = regex
+        path = ""
+        for r in res:
+            path = re.sub(r"\$[0-9]", group[int(r[1])][ind], path_temp, 1)
+            path_temp = path
+        return path
+    return None
 
 def build_dag(json):
     """ Build three / graph process dependences """ 
     nodes = {}
     root_list = []
     id_count = 1
+    re_group = []
     for cmd in json:
         name = proc_id = ""
         branch_f = 1
-        father = []
+        fath_temp = []
         options = dag.Options()
         redirect = []
         input_list = []
@@ -38,11 +65,7 @@ def build_dag(json):
                     except:
                         print nodes
                         raise Exception("{} There is a problem with the id of {} process".format(c.ERROR_PREFIX, name))
-                    father.append(t_node)
-                    if t_node.branch_f > 1:
-                        for i in range(0, t_node.branch_f - 1):
-                            f_id = "{}_{}".format(t_node.proc_id, i+2)
-                            father.append(nodes[f_id])
+                    fath_temp.append(t_node)
             elif elem == "options": # handle the different options case
                 for opt in cmd[elem]:
                     if len(opt) == 1:
@@ -58,9 +81,11 @@ def build_dag(json):
                         elif "value" in opt and "type" in opt: # value + type
                             options.add_option([opt["value"]], io_type=opt["type"])
                         elif "type" in opt and "regex" in opt: # type + regex (dynamic)
-                            f_list, n_proc = check_regex(opt["regex"], opt["type"])
+                            f_list, n_proc, group = check_regex(opt["regex"], opt["type"])
                             if branch_f == 1:
                                 branch_f = n_proc
+                            if group:
+                                re_group += group
                             if not f_list:
                                 options.add_doption(opt["type"], regex=opt["regex"])
                             else:
@@ -71,9 +96,11 @@ def build_dag(json):
                         if "key" in opt and "value" in opt and "type" in opt: # key + value + type
                             options.add_option([opt["key"], opt["value"]], io_type=opt["type"])
                         elif "key" in opt and "type" in opt and "regex" in opt: # key + type + regex (dynamic)
-                            f_list, n_proc = check_regex(opt["regex"], opt["type"])
+                            f_list, n_proc, group = check_regex(opt["regex"], opt["type"])
                             if branch_f == 1:
                                 branch_f = n_proc
+                            if group:
+                                re_group += group
                             if not f_list:
                                 options.add_doption(opt["type"], d_key=opt["key"], regex=opt["regex"])
                             else: # key + value + type
@@ -81,9 +108,11 @@ def build_dag(json):
                                 input_list.append([id_input, f_list])
                                 id_input += 1
                         elif "value" in opt and "type" in opt and "regex" in opt: # value + type + regex (dynamic)
-                            f_list, n_proc = check_regex(opt["regex"], opt["type"])
+                            f_list, n_proc, group = check_regex(opt["regex"], opt["type"])
                             if branch_f == 1:
                                 branch_f = n_proc
+                            if group:
+                                re_group += group
                             if not f_list:
                                 options.add_doption(opt["type"], d_val=opt["value"], regex=opt["regex"])
                             else:
@@ -92,17 +121,21 @@ def build_dag(json):
                                 id_input += 1
                     elif len(opt) == 4: 
                         if "value" in opt and "regex" in opt and "n" in opt and "type" in opt: # value + type + regex + n (dynamic)
-                            f_list = check_regex(opt["regex"], opt["type"])
+                            f_list, n_proc, group = check_regex(opt["regex"], opt["type"])
+                            if group:
+                                re_group += group
                             if not f_list:
                                 options.add_doption(opt["type"], d_val=opt["value"], regex=opt["regex"])
                             else: 
                                 options.add_option([f_list.pop()], io_type=opt["type"]) # value + type
                                 input_list.append(f_list)
                             branch_f = int(opt["n"])
+                            if branch_f != n_proc: 
+                                print("{} The value n is different from the number of file in {} process".format(c.WARNING_PREFIX, name))
             elif elem == "redirect":
                 for opt in cmd[elem]:
                     if opt["type"] == "stdout" or opt["type"] == "stderr" or opt["type"] == "stdout|stderr" or opt["type"] == "stderr|stdout":
-                        if "file" in cmd[elem]:
+                        if "file" in opt:
                             file_path = opt["file"]
                         else: # automatic generation redirect file path
                             file_path = "{}_{}_out.txt".format(name, id_count)
@@ -123,7 +156,23 @@ def build_dag(json):
                     n_proc = 1
                 if not options.io_index["output"] and not options.redirect: # no output in a process
                     print("{} The process {} has no output defined".format(c.WARNING_PREFIX, new_proc_id))
+                #father  
+                father = [] 
+                if fath_temp:
+                    for f in fath_temp:
+                        if f.branch_f > 1:
+                            if i == 0:
+                                f_id = "{}".format(t_node.proc_id)
+                            else:
+                                f_id = "{}_{}".format(t_node.proc_id, i+1)
+                            father.append(nodes[f_id])
+                        else:
+                            father.append(f)                        
                 # set input from regex
+                if options.regex:
+                    for o in options.opt_list:
+                        if options.dynamic and len(o) == 4 and o[3] != None: # check if there are groups inside regex
+                            o[2] = replace_group(o[3], i, re_group)
                 if input_list:
                     j = 0
                     for o in options.opt_list:
@@ -142,9 +191,9 @@ def build_dag(json):
         else:
             if not options.io_index["output"] and not options.redirect: # no output in a process
                 print("{} The process {} has no output defined".format(c.WARNING_PREFIX, proc_id))
-            process = dag.Process(name, proc_id, options, branch_f, father)
+            process = dag.Process(name, proc_id, options, branch_f, fath_temp)
             nodes[proc_id] = process
-            if not father:
+            if not fath_temp:
                 root_list.append(process)
     process_dag = dag.Dag(root_list, nodes)
     return process_dag
@@ -155,6 +204,7 @@ def build_cue(p_dag, num_proc):
     cue = []
     leaves_o = 0
     for n in p_dag.root:
+        print n
         cue.append([n.proc_id, -1]) # process and the node will execute the job
     # init the bfs
     n_list = p_dag.root
@@ -177,13 +227,12 @@ def build_cue(p_dag, num_proc):
                     i = 0
                     for f in s.father:
                         # add new controls on output here
-                        options = f.options
-                        out = options.get_io_option("output")
+                        out = f.options.get_io_option("output")
                         if out:
                             for o in out:
                                 new_io = s.options.set_io_option("input", o)
                                 if new_io == False and i < father_l - 1:
-                                    print("{} The process {} has more output than sons input".format(c.WARNING_PREFIX, f.proc_id))
+                                    #print("{} The process {} has more output than sons input".format(c.WARNING_PREFIX, f.proc_id))
                                     break
                         i += 1
                     print s
@@ -197,6 +246,6 @@ def gen_mpi(json, num_proc):
     """ Generate all the stuff needed for the parallelization """
     process_dag = build_dag(json)
     process_dag.compute_son()
-    print dag.Process().print_nlist(process_dag.root)
+    print "Roots node " + str(dag.Process().print_nlist(process_dag.root))
     process_dag.cue = build_cue(process_dag, num_proc)
     process_dag.save(c.SERIAL_FILE)
