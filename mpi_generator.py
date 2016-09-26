@@ -6,7 +6,11 @@ import re
 
 def check_regex(regex, io_type):
     """ Expand the regex if it is needed """
-    f_list = sorted(glob.glob("../" + regex))
+    if regex[0] != "/":
+        regex_path = "../" + regex
+    else:
+        regex_path = regex
+    f_list = sorted(glob.glob(regex_path))
     branch_f = 1
     if f_list and len(f_list) > 1 and io_type == "input":
         branch_f = len(f_list)
@@ -51,6 +55,7 @@ def build_dag(json):
         redirect = []
         input_list = []
         id_input = 1
+        after_s = []
         for elem in cmd:
             if elem == "id":
                 proc_id = cmd[elem]
@@ -60,12 +65,16 @@ def build_dag(json):
                 branch_f = int(cmd[elem])
             elif elem == "after":
                 for i in range(len(cmd[elem])):
+                    node_id = cmd[elem][i]
+                    if node_id[-1] == "*":
+                        node_id = node_id[0:len(node_id)-1]
+                        after_s.append(node_id)
                     try:
-                        t_node = nodes[cmd[elem][i]]
+                        t_node = nodes[node_id]
+                        fath_temp.append(t_node)
                     except:
                         print nodes
                         raise Exception("{} There is a problem with the id of {} process".format(c.ERROR_PREFIX, name))
-                    fath_temp.append(t_node)
             elif elem == "options": # handle the different options case
                 for opt in cmd[elem]:
                     if len(opt) == 1:
@@ -89,7 +98,7 @@ def build_dag(json):
                             if not f_list:
                                 options.add_doption(opt["type"], regex=opt["regex"])
                             else:
-                                options.add_option(id_input, io_type=opt["type"]) # value + type
+                                options.add_option([id_input], io_type=opt["type"]) # value + type
                                 input_list.append([id_input, f_list])
                                 id_input += 1
                     elif len(opt) == 3:
@@ -175,6 +184,7 @@ def build_dag(json):
                             o[2] = replace_group(o[3], i, re_group)
                 if input_list:
                     j = 0
+                    #print input_list
                     for o in options.opt_list:
                         path = len(o) - 1 
                         if o[path] == input_list[j][0]: # id_input
@@ -191,6 +201,13 @@ def build_dag(json):
         else:
             if not options.io_index["output"] and not options.redirect: # no output in a process
                 print("{} The process {} has no output defined".format(c.WARNING_PREFIX, proc_id))
+            if after_s:
+                father = copy.deepcopy(fath_temp)
+                for f in father:
+                    if f.name in after_s:
+                        for i in range(0, f.branch_f - 1):
+                            f_id = "{}_{}".format(f.proc_id, i+2)
+                            fath_temp.append(nodes[f_id])
             process = dag.Process(name, proc_id, options, branch_f, fath_temp)
             nodes[proc_id] = process
             if not fath_temp:
@@ -232,7 +249,7 @@ def build_cue(p_dag, num_proc):
                             for o in out:
                                 new_io = s.options.set_io_option("input", o)
                                 if new_io == False and i < father_l - 1:
-                                    #print("{} The process {} has more output than sons input".format(c.WARNING_PREFIX, f.proc_id))
+                                    print("{} The process {} has more output than sons input".format(c.WARNING_PREFIX, f.proc_id))
                                     break
                         i += 1
                     print s

@@ -31,6 +31,7 @@ def dispatch(data, node_status, log):
             if job != None: # is available a new job to do
                 comm.send(job, dest=i+1, tag=tags.START) 
                 log.write("[START]\t{}\n".format(job.proc_id))
+                log.flush()
                 node_status[i] = True
 
 def next_job(data, rank):
@@ -94,6 +95,7 @@ if __name__ == '__main__':
                 print("A new msg from {} with tag {} and value {}".format(source, tag, msg))
                 j_executed = data.nodes[msg]
                 log.write("[DONE]\t{}\n".format(j_executed.proc_id))
+                log.flush()
                 # regex handler
                 i = 0
                 more_out = False
@@ -102,18 +104,19 @@ if __name__ == '__main__':
                     if job_opt.regex[0]: # the job has a regex
                         for r in job_opt.regex[1]:
                             option = job_opt.opt_list[r]
-                            file_list = find_file(option[3]) # find file that match with the regex
-                            lenght_fl = len(file_list)
-                            if lenght_fl >= len(j_executed.son):
-                                new_io = True
-                                while new_io:  
-                                    new_io = job_opt.set_io_option(option[0], file_list[i]) # set the result
-                                    if new_io == True:
-                                        i += 1
-                                if lenght_fl > len(j_executed.son) and more_out != True:
-                                    more_out = True
-                            else:
-                                raise Exception("[ERROR] The process {} has less output than sons\n".format(j.executed.proc_id))
+                            if option[2] == None: # not expanded
+                                file_list = find_file(option[3]) # find file that match with the regex
+                                lenght_fl = len(file_list)
+                                if lenght_fl >= len(j_executed.son):
+                                    new_io = True
+                                    while new_io:  
+                                        new_io = job_opt.set_io_option(option[0], file_list[i]) # set the result
+                                        if new_io == True:
+                                            i += 1
+                                    if lenght_fl > len(j_executed.son) and more_out != True:
+                                        more_out = True
+                                else:
+                                    raise Exception("[ERROR] The process {} has less output than sons\n".format(j.executed.proc_id))
                 if more_out:
                     print("[WARNING] The process {} has more output than sons input\n".format(j_executed.proc_id))
                 j_executed.status = True
@@ -121,6 +124,7 @@ if __name__ == '__main__':
                 n_job -= 1
                 dispatch(data, node_status, log)
         stop_comp()
+        log.write("[FINISH]\n")
         log.close()
     else: # slaves
         #print("I'm the node " + str(rank))
@@ -131,6 +135,8 @@ if __name__ == '__main__':
                 cmd = gen_command(job)
                 proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
                 proc.wait()
+                print cmd
+                print("Error: {}".format(proc.stderr.read()))
                 # redirect handler
                 redirect = job.options.redirect
                 if redirect: # it is a redirect process 
