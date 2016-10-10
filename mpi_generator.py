@@ -31,6 +31,13 @@ def regex_group(regex, result):
 
 def replace_group(regex, ind, group):
     """ Find and replace regex groups """
+    i = 0
+    for g in group:
+        i += 1
+        if g:
+            break
+    if i == len(group): # check if it is possible use the group
+        return None
     res = re.findall("\$[0-9]", regex)
     if res:
         path_temp = regex

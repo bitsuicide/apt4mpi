@@ -19,7 +19,7 @@ if __name__ == "__main__":
     yaml_data = yaml.load(yaml_file)
     job_name = yaml_data["job_options"]["job_name"]
     # create new folders
-    new_folder = "{}_api4mpi".format(job_name) 
+    new_folder = "{}_apt4mpi".format(job_name) 
     dir_cr = False
     i = 0
     while dir_cr == False:

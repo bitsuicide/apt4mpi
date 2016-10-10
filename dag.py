@@ -1,4 +1,4 @@
-""" Dag data class and utility """
+""" Dag data class and utilities """
 
 import pickle
 
