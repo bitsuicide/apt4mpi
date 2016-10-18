@@ -67,8 +67,6 @@ def comm_analyze(comm):
                         io_type = "output"
                     elif start_io[1] == c.START_ROUT:
                         io_type = "stdout"
-                    elif start_io[1] == c.START_RIN:
-                        io_type = "stdin"
                     elif start_io[1] == c.START_RERR:
                         io_type = "stderr"    
                     if end_io == -1:
@@ -132,7 +130,7 @@ if __name__ == "__main__":
     print("\nCommands declaration")
     commands = []
     i = 1
-    while(True):
+    while True:
         print("Command {}\n".format(i))
         comm_id = raw_input("Insert the executable id: ")
         if not comm_id:
@@ -161,47 +159,47 @@ if __name__ == "__main__":
             break
         i += 1
     data["commands"] = commands
-    print("\nJob options \n")
-    job_options = {}
-    job_mpiproc = raw_input("Insert the number of MPI PROCESSORS: ")
-    if not job_mpiproc:
-        print("You didn't choose the number of processors. Will be used 1.\n")
-        job_mpiproc = "1"
-    job_options["mpi_proc"] = job_mpiproc
-    job_ncpu = raw_input("Insert the number of CPU: ")
-    if not job_ncpu:
-        print("You didn't choose the number of cpu. Will be used 2.\n")
-        job_ncpu = "2"
-    job_options["ncpus"] = job_ncpu
-    job_chunks = raw_input("Insert the number of CHUNKS: ")
-    if not job_chunks:
-        print("You didn't choose the number of chunks. Will be used 2.\n")
-        job_chunks = "2"
-    job_options["chunks"] = job_chunks
-    job_mem = raw_input("Insert the memory dimension (ex. 1GB/100MB): ")
-    if not job_mem:
-        print("You didn't choose the memory dimension. Will be used 100MB.\n")
-        job_mem = "100MB"
-    job_options["memory"] = job_mem
-    job_walltime = raw_input("Insert the walltime (ex. 1:00:00): ")
-    if not job_walltime:
-        print("You didn't choose the walltime. Will be used 0:01:00.\n")
-        job_walltime = "0:01:00"
-    job_options["walltime"] = job_walltime
-    job_queue = raw_input("Insert the queue name: ")
-    job_options["queue"] = job_queue
-    job_account = raw_input("Insert the account: ")
-    job_options["account"] = job_account
-    job_name = raw_input("Insert the job name: ")
-    if not job_name:
-        print("You didn't choose the job name. Will be used paralleljob.\n")
-        job_name = "paralleljob"
-    job_options["job_name"] = job_name
-    job_error = raw_input("Insert the error path: ")
-    job_options["error_log_path"] = job_error
-    job_output = raw_input("Insert the output path: ")
-    job_options["output_log_path"] = job_output
-    print job_mpiproc, job_ncpu, job_chunks, job_mem, job_walltime, job_queue, job_account, job_name, job_error, job_output
-    data["job_options"] = job_options
+    # print("\nJob options \n")
+    # job_options = {}
+    # job_mpiproc = raw_input("Insert the number of MPI PROCESSORS: ")
+    # if not job_mpiproc:
+    #     print("You didn't choose the number of processors. Will be used 1.\n")
+    #     job_mpiproc = "1"
+    # job_options["mpi_proc"] = job_mpiproc
+    # job_ncpu = raw_input("Insert the number of CPU: ")
+    # if not job_ncpu:
+    #     print("You didn't choose the number of cpu. Will be used 2.\n")
+    #     job_ncpu = "2"
+    # job_options["ncpus"] = job_ncpu
+    # job_chunks = raw_input("Insert the number of CHUNKS: ")
+    # if not job_chunks:
+    #     print("You didn't choose the number of chunks. Will be used 2.\n")
+    #     job_chunks = "2"
+    # job_options["chunks"] = job_chunks
+    # job_mem = raw_input("Insert the memory dimension (ex. 1GB/100MB): ")
+    # if not job_mem:
+    #     print("You didn't choose the memory dimension. Will be used 100MB.\n")
+    #     job_mem = "100MB"
+    # job_options["memory"] = job_mem
+    # job_walltime = raw_input("Insert the walltime (ex. 1:00:00): ")
+    # if not job_walltime:
+    #     print("You didn't choose the walltime. Will be used 0:01:00.\n")
+    #     job_walltime = "0:01:00"
+    # job_options["walltime"] = job_walltime
+    # job_queue = raw_input("Insert the queue name: ")
+    # job_options["queue"] = job_queue
+    # job_account = raw_input("Insert the account: ")
+    # job_options["account"] = job_account
+    # job_name = raw_input("Insert the job name: ")
+    # if not job_name:
+    #     print("You didn't choose the job name. Will be used paralleljob.\n")
+    #     job_name = "paralleljob"
+    # job_options["job_name"] = job_name
+    # job_error = raw_input("Insert the error path: ")
+    # job_options["error_log_path"] = job_error
+    # job_output = raw_input("Insert the output path: ")
+    # job_options["output_log_path"] = job_output
+    # print job_mpiproc, job_ncpu, job_chunks, job_mem, job_walltime, job_queue, job_account, job_name, job_error, job_output
+    # data["job_options"] = job_options
     yaml.dump(data, yaml_file, default_flow_style=False)
     yaml_file.close()

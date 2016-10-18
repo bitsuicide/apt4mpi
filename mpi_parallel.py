@@ -6,6 +6,7 @@ from mpi4py import MPI
 import subprocess
 import os
 import glob
+import datetime
 
 comm = MPI.COMM_WORLD   # get MPI communicator object
 size = comm.size        # total number of processes
@@ -63,9 +64,10 @@ def gen_command(process):
         i = 0
         opt = ""
         for el in o: 
-            if el and el != "input" and el != "output":
-                if i != 3:
-                    opt += "{} ".format(el)
+            if el and el != "input" and el != "output" and i != 3:
+                opt += str(el)
+                if el[-1] != "=" and el[-1] != "'": # command without space
+                    opt += " " # space
             i += 1
         cmd += opt
     return cmd
@@ -82,6 +84,8 @@ if __name__ == '__main__':
         #print("I'm the master")
         #data = pickle.load(open("./custom_pipeline_api4mpi/data.p", "rb"))
         log = open(log_file, "w")
+        current_t = datetime.datetime.now()
+        log.write("{}\n".format(current_t))
         data = pickle.load(open("data.p", "rb"))
         node_status = [False for i in range(size - 1)]
         dispatch(data, node_status, log)
@@ -123,9 +127,11 @@ if __name__ == '__main__':
                 remove_job(data, j_executed)
                 n_job -= 1
                 dispatch(data, node_status, log)
-        stop_comp()
         log.write("[FINISH]\n")
+        current_t = datetime.datetime.now()
+        log.write("{}\n".format(current_t))
         log.close()
+        stop_comp()
     else: # slaves
         #print("I'm the node " + str(rank))
         while True:
