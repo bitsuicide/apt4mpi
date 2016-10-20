@@ -56,7 +56,7 @@ def build_dag(json):
     re_group = []
     for cmd in json:
         name = proc_id = ""
-        branch_f = 1
+        branch_f = -1
         fath_temp = []
         options = dag.Options()
         redirect = []
@@ -98,7 +98,7 @@ def build_dag(json):
                             options.add_option([opt["value"]], io_type=opt["type"])
                         elif "type" in opt and "regex" in opt: # type + regex (dynamic)
                             f_list, n_proc, group = check_regex(opt["regex"], opt["type"])
-                            if branch_f == 1:
+                            if branch_f == -1:
                                 branch_f = n_proc
                             if group:
                                 re_group += group
@@ -113,7 +113,7 @@ def build_dag(json):
                             options.add_option([opt["key"], opt["value"]], io_type=opt["type"])
                         elif "key" in opt and "type" in opt and "regex" in opt: # key + type + regex (dynamic)
                             f_list, n_proc, group = check_regex(opt["regex"], opt["type"])
-                            if branch_f == 1:
+                            if branch_f == -1:
                                 branch_f = n_proc
                             if group:
                                 re_group += group
@@ -125,7 +125,7 @@ def build_dag(json):
                                 id_input += 1
                         elif "value" in opt and "type" in opt and "regex" in opt: # value + type + regex (dynamic)
                             f_list, n_proc, group = check_regex(opt["regex"], opt["type"])
-                            if branch_f == 1:
+                            if branch_f == -1:
                                 branch_f = n_proc
                             if group:
                                 re_group += group
@@ -163,6 +163,12 @@ def build_dag(json):
         if proc_id == "": # generate new id 
             proc_id = "{}_{}".format(name, id_count)
             id_count += 1
+        if branch_f == -1 and len(fath_temp) > 1: # if the branching factor is not specified
+            branch_f = 0
+            for f in fath_temp:
+                branch_f += f.branching_factor
+        else:
+            branch_f = 1
         if branch_f > 1: # process parallelism
             new_proc_id = proc_id
             n_proc = branch_f

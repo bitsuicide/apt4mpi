@@ -81,8 +81,6 @@ tags = enum("DONE", "EXIT", "START")
 
 if __name__ == '__main__':
     if rank == 0: # master 
-        #print("I'm the master")
-        #data = pickle.load(open("./custom_pipeline_api4mpi/data.p", "rb"))
         log = open(log_file, "w")
         current_t = datetime.datetime.now()
         log.write("{}\n".format(current_t))
@@ -91,14 +89,18 @@ if __name__ == '__main__':
         dispatch(data, node_status, log)
         n_job = len(data.cue) # total job to do
         while n_job >= 1:
-            msg = comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
+            msg, exit_code = comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
             source = status.Get_source()
             tag = status.Get_tag()
             if tag == tags.DONE: # job executed
                 node_status[source-1] = False
                 print("A new msg from {} with tag {} and value {}".format(source, tag, msg))
                 j_executed = data.nodes[msg]
-                log.write("[DONE]\t{}\n".format(j_executed.proc_id))
+                if exit_code == 0:
+                    status = "DONE"
+                else:
+                    status = "ERROR"
+                log.write("[{}]\t{}\n".format(status, j_executed.proc_id))
                 log.flush()
                 # regex handler
                 i = 0
@@ -140,7 +142,7 @@ if __name__ == '__main__':
             if tag == tags.START: # there is a new job to do
                 cmd = gen_command(job)
                 proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-                proc.wait()
+                exit_code = proc.wait()
                 print cmd
                 print("Error: {}".format(proc.stderr.read()))
                 # redirect handler
@@ -159,6 +161,6 @@ if __name__ == '__main__':
                         file.write(out)
                         file.close()
                 print("Node {}: {}".format(rank, job.proc_id))
-                comm.send(job.proc_id, dest=0, tag=tags.DONE)
+                comm.send((job.proc_id, exit_code), dest=0, tag=tags.DONE)
             elif tag == tags.EXIT:
                 break
