@@ -66,7 +66,7 @@ def gen_command(process):
         for el in o: 
             if el and el != "input" and el != "output" and i != 3:
                 opt += str(el)
-                if el[-1] != "=" and el[-1] != "'": # command without space
+                if opt[-1] != "=" and opt[-1] != "'": # command without space
                     opt += " " # space
             i += 1
         cmd += opt
