@@ -2,6 +2,7 @@
 
 import yaml
 import constant as c
+import sys
 
 def check_regex(str):
     """ Check if a string contains regex special characters """
@@ -95,7 +96,12 @@ def comm_analyze(comm):
     return comm_split[0], opt, redirect
 
 if __name__ == "__main__":
-    yaml_file = open(c.INPUT_FILE, "w")
+    if len(sys.argv) > 1:
+        yaml_prefix = sys.argv[1]
+        yaml_path = "{}/{}".format(yaml_prefix, c.INPUT_FILE)
+    else:
+        yaml_path = c.INPUT_FILE
+    yaml_file = open(yaml_path, "w")
     data = {}
     print("**********************************\n")
     print("Input generator for apt4mpi\n")
