@@ -163,12 +163,10 @@ def build_dag(json):
         if proc_id == "": # generate new id 
             proc_id = "{}_{}".format(name, id_count)
             id_count += 1
-        if branch_f == -1 and len(fath_temp) > 1: # if the branching factor is not specified
+        if branch_f == -1 and len(fath_temp) >= 1: # if the branching factor is not specified
             branch_f = 0
             for f in fath_temp:
-                branch_f += f.branching_factor
-        else:
-            branch_f = 1
+                branch_f += f.branch_f
         if branch_f > 1: # process parallelism
             new_proc_id = proc_id
             n_proc = branch_f
@@ -237,7 +235,7 @@ def build_cue(p_dag, num_proc):
         print n
         cue.append([n.proc_id, -1]) # process and the node will execute the job
     # init the bfs
-    n_list = p_dag.root
+    n_list = copy.deepcopy(p_dag.root)
     n_visited = {}
     for n in p_dag.nodes:
         n_visited[n] = False

@@ -128,7 +128,7 @@ if __name__ == "__main__":
                 mod = {"name": mod_name, "version": mod_vers, "autoload": mod_auto}
             modules.append(mod)
             answ = raw_input("Do you want to load another module (y/n)? ")
-            print mod_name, mod_vers, mod_auto
+            #print mod_name, mod_vers, mod_auto
             if check_yn(answ) == False:
                 break
             i += 1
@@ -160,7 +160,7 @@ if __name__ == "__main__":
             command["options"] = comm_opt
         commands.append(command)
         answ = raw_input("Do you want to load another module (y/n)? ")
-        print command
+        #print command
         if check_yn(answ) == False:
             break
         i += 1
@@ -205,7 +205,7 @@ if __name__ == "__main__":
     job_options["error_log_path"] = job_error
     job_output = raw_input("Insert the output path: ")
     job_options["output_log_path"] = job_output
-    print job_mpiproc, job_ncpu, job_chunks, job_mem, job_walltime, job_queue, job_account, job_name, job_error, job_output
+    #print job_mpiproc, job_ncpu, job_chunks, job_mem, job_walltime, job_queue, job_account, job_name, job_error, job_output
     data["job_options"] = job_options
     yaml.dump(data, yaml_file, default_flow_style=False)
     yaml_file.close()

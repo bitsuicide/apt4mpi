@@ -100,7 +100,7 @@ if __name__ == '__main__':
                     status = "DONE"
                 else:
                     status = "ERROR"
-                log.write("[{}]\t{}\n".format(status, j_executed.proc_id))
+                log.write("[{}\t{}]\t{}\n".format(status, exit_code, j_executed.proc_id))
                 log.flush()
                 # regex handler
                 i = 0
