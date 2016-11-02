@@ -89,23 +89,22 @@ if __name__ == '__main__':
         dispatch(data, node_status, log)
         n_job = len(data.cue) # total job to do
         while n_job >= 1:
-            msg, exit_code = comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
+            job = comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
             source = status.Get_source()
             tag = status.Get_tag()
             if tag == tags.DONE: # job executed
                 node_status[source-1] = False
                 print("A new msg from {} with tag {} and value {}".format(source, tag, msg))
-                j_executed = data.nodes[msg]
-                if exit_code == 0:
+                if job.exit_code == 0:
                     status = "DONE"
                 else:
                     status = "ERROR"
-                log.write("[{}\t{}]\t{}\n".format(status, exit_code, j_executed.proc_id))
+                log.write("[{}\t{}]\t{}\n".format(status, job.exit_code, job.proc_id))
                 log.flush()
                 # regex handler
                 i = 0
                 more_out = False
-                for s in j_executed.son:
+                for s in job.son:
                     job_opt = s.options
                     if job_opt.regex[0]: # the job has a regex
                         for r in job_opt.regex[1]:
@@ -113,26 +112,28 @@ if __name__ == '__main__':
                             if option[2] == None: # not expanded
                                 file_list = find_file(option[3]) # find file that match with the regex
                                 lenght_fl = len(file_list)
-                                if lenght_fl >= len(j_executed.son):
+                                if lenght_fl >= len(job.son):
                                     new_io = True
                                     while new_io:  
                                         new_io = job_opt.set_io_option(option[0], file_list[i]) # set the result
                                         if new_io == True:
                                             i += 1
-                                    if lenght_fl > len(j_executed.son) and more_out != True:
+                                    if lenght_fl > len(job.son) and more_out != True:
                                         more_out = True
                                 else:
-                                    raise Exception("[ERROR] The process {} has less output than sons\n".format(j.executed.proc_id))
+                                    raise Exception("[ERROR] The process {} has less output than sons\n".format(job.proc_id))
                 if more_out:
-                    print("[WARNING] The process {} has more output than sons input\n".format(j_executed.proc_id))
-                j_executed.status = True
-                remove_job(data, j_executed)
+                    print("[WARNING] The process {} has more output than sons input\n".format(job.proc_id))
+                job.status = True
+                data.nodes[job.proc_id] = job # save the job executed
+                remove_job(data, job)
                 n_job -= 1
                 dispatch(data, node_status, log)
         log.write("[FINISH]\n")
         current_t = datetime.datetime.now()
         log.write("{}\n".format(current_t))
         log.close()
+        data.save("data_end.p")
         stop_comp()
     else: # slaves
         #print("I'm the node " + str(rank))
@@ -141,15 +142,22 @@ if __name__ == '__main__':
             tag = status.Get_tag()  
             if tag == tags.START: # there is a new job to do
                 cmd = gen_command(job)
+                start_time = datetime.datetime.now()
                 proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
                 exit_code = proc.wait()
+                end_time = datetime.datetime.now()
+                # new job information
+                job.start_time = str(start_time)
+                job.end_time = str(end_time)
+                job.exec_time = str(end_time - start_time)
+                job.exit_code = exit_code
                 print cmd
                 print("Error: {}".format(proc.stderr.read()))
                 # redirect handler
                 redirect = job.options.redirect
                 if redirect: # it is a redirect process 
                     for r in redirect: # writing the output or/and the error file
-                        file = open(r[1], "w")  
+                        file = open(r[1], "w")
                         if r[0] == "stdout":
                             out = proc.stdout.read()
                         elif r[0] == "stderr":
@@ -160,7 +168,10 @@ if __name__ == '__main__':
                             out = proc.stderr.read() + proc.stdout.read()
                         file.write(out)
                         file.close()
+                        job.std_err = r[1]
+                else:
+                    job.std_err = proc.stderr.read()
                 print("Node {}: {}".format(rank, job.proc_id))
-                comm.send((job.proc_id, exit_code), dest=0, tag=tags.DONE)
+                comm.send(job, dest=0, tag=tags.DONE)
             elif tag == tags.EXIT:
                 break

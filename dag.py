@@ -83,6 +83,11 @@ class Process:
         self.father = father
         self.son = []
         self.status = False
+        self.start_time = 0
+        self.end_time = 0
+        self.exec_time = 0
+        self.exit_status = None
+        self.std_err = ""
 
     def __str__(self):
         if self.father != None:
