@@ -75,6 +75,12 @@ class Options:
 
 class Process:
     """ Process class - DAG node """
+    STAT_READY = "ready"
+    STAT_NREADY = "waiting"
+    STAT_RUNNING = "running"
+    STAT_DONE = "done"
+    STAT_FAILED = "failed"
+
     def __init__(self, name="", proc_id="", options=None, branch_f=1, father=None):
         self.name = name
         self.proc_id = proc_id 
@@ -82,7 +88,7 @@ class Process:
         self.branch_f = branch_f
         self.father = father
         self.son = []
-        self.status = False
+        self.status = self.STAT_NREADY
         self.start_time = 0
         self.end_time = 0
         self.exec_time = 0
@@ -110,8 +116,9 @@ class Process:
             return True
         else:
             for f in self.father:
-                if f.status == False:
+                if f.status != self.STAT_READY:
                     return False
+            self.status = self.STAT_READY
             return True
 
 class Dag:

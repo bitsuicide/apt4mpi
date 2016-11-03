@@ -84,7 +84,7 @@ if __name__ == '__main__':
         log = open(log_file, "w")
         current_t = datetime.datetime.now()
         log.write("{}\n".format(current_t))
-        data = pickle.load(open("data.p", "rb"))
+        data = pickle.load(open("data_start.p", "rb"))
         node_status = [False for i in range(size - 1)]
         dispatch(data, node_status, log)
         n_job = len(data.cue) # total job to do
@@ -94,7 +94,7 @@ if __name__ == '__main__':
             tag = status.Get_tag()
             if tag == tags.DONE: # job executed
                 node_status[source-1] = False
-                print("A new msg from {} with tag {} and value {}".format(source, tag, msg))
+                print("A new msg from {} with tag {} and value {}".format(source, tag, job.proc_id))
                 if job.exit_code == 0:
                     status = "DONE"
                 else:
@@ -124,7 +124,10 @@ if __name__ == '__main__':
                                     raise Exception("[ERROR] The process {} has less output than sons\n".format(job.proc_id))
                 if more_out:
                     print("[WARNING] The process {} has more output than sons input\n".format(job.proc_id))
-                job.status = True
+                if status == "DONE":
+                    job.status = job.STAT_DONE
+                else:
+                    job.status = job.STAT_FAILED
                 data.nodes[job.proc_id] = job # save the job executed
                 remove_job(data, job)
                 n_job -= 1
@@ -142,6 +145,7 @@ if __name__ == '__main__':
             tag = status.Get_tag()  
             if tag == tags.START: # there is a new job to do
                 cmd = gen_command(job)
+                job.status = job.STAT_RUNNING
                 start_time = datetime.datetime.now()
                 proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
                 exit_code = proc.wait()
