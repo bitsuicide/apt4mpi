@@ -116,9 +116,9 @@ class Process:
             return True
         else:
             for f in self.father:
-                if f.status != self.STAT_READY:
+                if f.status == self.STAT_NREADY or f.status == self.STAT_RUNNING:
                     return False
-            self.status = self.STAT_READY
+            #self.status = self.STAT_READY
             return True
 
 class Dag:

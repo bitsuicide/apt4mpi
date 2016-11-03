@@ -7,6 +7,7 @@ import subprocess
 import os
 import glob
 import datetime
+import copy
 
 comm = MPI.COMM_WORLD   # get MPI communicator object
 size = comm.size        # total number of processes
@@ -130,8 +131,15 @@ if __name__ == '__main__':
                     job.status = job.STAT_DONE
                 else:
                     job.status = job.STAT_FAILED
-                data.nodes[job.proc_id] = job # save the job executed
-                remove_job(data, job)
+                # copy object
+                job_executed = data.nodes[job.proc_id]
+                job_executed.status = job.status
+                job_executed.std_err = job.std_err
+                job_executed.start_time = job.start_time
+                job_executed.end_time = job.end_time
+                job_executed.exec_time = job.exec_time
+                job_executed.exit_status = job.exit_status
+                remove_job(data, job_executed)
                 n_job -= 1
                 data.save("data_end.p") # save new status
                 dispatch(data, node_status, log)
