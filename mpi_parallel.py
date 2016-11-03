@@ -30,6 +30,8 @@ def dispatch(data, node_status, log):
         if node_status[i] == False:
             job = next_job(data, i+1)
             if job != None: # is available a new job to do
+                job.status = job.STAT_RUNNING
+                data.save("data_end.p") # save new status
                 comm.send(job, dest=i+1, tag=tags.START) 
                 log.write("[START]\t{}\n".format(job.proc_id))
                 log.flush()
@@ -96,10 +98,10 @@ if __name__ == '__main__':
                 node_status[source-1] = False
                 print("A new msg from {} with tag {} and value {}".format(source, tag, job.proc_id))
                 if job.exit_code == 0:
-                    status = "DONE"
+                    j_status = "DONE"
                 else:
-                    status = "ERROR"
-                log.write("[{}\t{}]\t{}\n".format(status, job.exit_code, job.proc_id))
+                    j_status = "ERROR"
+                log.write("[{}\t{}]\t{}\n".format(j_status, job.exit_code, job.proc_id))
                 log.flush()
                 # regex handler
                 i = 0
@@ -124,28 +126,27 @@ if __name__ == '__main__':
                                     raise Exception("[ERROR] The process {} has less output than sons\n".format(job.proc_id))
                 if more_out:
                     print("[WARNING] The process {} has more output than sons input\n".format(job.proc_id))
-                if status == "DONE":
+                if j_status == "DONE":
                     job.status = job.STAT_DONE
                 else:
                     job.status = job.STAT_FAILED
                 data.nodes[job.proc_id] = job # save the job executed
                 remove_job(data, job)
                 n_job -= 1
+                data.save("data_end.p") # save new status
                 dispatch(data, node_status, log)
         log.write("[FINISH]\n")
         current_t = datetime.datetime.now()
         log.write("{}\n".format(current_t))
         log.close()
-        data.save("data_end.p")
+        data.save("data_end.p") # save the end status
         stop_comp()
     else: # slaves
-        #print("I'm the node " + str(rank))
         while True:
             job = comm.recv(source=0, tag=MPI.ANY_TAG, status=status)
             tag = status.Get_tag()  
             if tag == tags.START: # there is a new job to do
                 cmd = gen_command(job)
-                job.status = job.STAT_RUNNING
                 start_time = datetime.datetime.now()
                 proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
                 exit_code = proc.wait()
