@@ -131,7 +131,7 @@ if __name__ == '__main__':
                     job.status = job.STAT_DONE
                 else:
                     job.status = job.STAT_FAILED
-                # copy object
+                # copy object   
                 job_executed = data.nodes[job.proc_id]
                 job_executed.status = job.status
                 job_executed.std_err = job.std_err

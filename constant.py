@@ -20,7 +20,3 @@ START_OUTPUT = "#o"
 START_ROUT = "#rout"
 START_RERR = "#rerr"
 REGEX_SYM = ["^", "{", "}", "*", "(", ")", "[", "]", "+", "*", "<", ">", "&"]
-STAT_READY = "ready"
-STAT_NREADY = "unready"
-STAT_RUNNING = "running"
-STAT_DONE = "done"

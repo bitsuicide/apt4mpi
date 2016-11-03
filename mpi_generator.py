@@ -235,7 +235,7 @@ def build_cue(p_dag, num_proc):
         print n
         cue.append([n.proc_id, -1]) # process and the node will execute the job
     # init the bfs
-    n_list = copy.deepcopy(p_dag.root)
+    n_list = p_dag.root
     n_visited = {}
     for n in p_dag.nodes:
         n_visited[n] = False
