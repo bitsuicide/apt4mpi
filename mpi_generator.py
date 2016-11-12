@@ -233,9 +233,11 @@ def build_queue(p_dag, num_proc):
     leaves_o = 0
     for n in p_dag.root:
         print n
-        queue.append([n.proc_id, -1]) # process and the node will execute the job
+        queue.append([n.proc_id, -1]) # process and the id of node will execute the job
     # init the bfs
-    n_list = p_dag.root
+    n_list = []
+    for r in p_dag.root:
+        n_list.append(r)
     n_visited = {}
     for n in p_dag.nodes:
         n_visited[n] = False
