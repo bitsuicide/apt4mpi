@@ -226,14 +226,14 @@ def build_dag(json):
     process_dag = dag.Dag(root_list, nodes)
     return process_dag
 
-def build_cue(p_dag, num_proc):
-    """ Build the cue and set the io """
-    # init the cue
-    cue = []
+def build_queue(p_dag, num_proc):
+    """ Build the queue and set the io """
+    # init the queue
+    queue = []
     leaves_o = 0
     for n in p_dag.root:
         print n
-        cue.append([n.proc_id, -1]) # process and the node will execute the job
+        queue.append([n.proc_id, -1]) # process and the node will execute the job
     # init the bfs
     n_list = p_dag.root
     n_visited = {}
@@ -246,9 +246,9 @@ def build_cue(p_dag, num_proc):
                 if n_visited[s.proc_id] == False and s not in n_list:
                     if not s.son and not s.options.io_index["output"]: # leaves without output
                         leaves_o += 1
-                    # cue and bfs
+                    # queue and bfs
                     n_list.append(s)
-                    cue.append([s.proc_id, -1])
+                    queue.append([s.proc_id, -1])
                     n_visited[s.proc_id] = True
                     # set the io
                     father_l = len(s.father)
@@ -268,12 +268,12 @@ def build_cue(p_dag, num_proc):
                         raise Exception("{} The process {} has one or more input without a path".format(c.ERROR_PREFIX, s.proc_id))
     if leaves_o > 1: # leaves warning
         print("{} Is it possible a multiple writing on the stdout".format(c.WARNING_PREFIX))
-    return cue
+    return queue
 
 def gen_mpi(json, num_proc):
     """ Generate all the stuff needed for the parallelization """
     process_dag = build_dag(json)
     process_dag.compute_son()
     print "Roots node " + str(dag.Process().print_nlist(process_dag.root))
-    process_dag.cue = build_cue(process_dag, num_proc)
+    process_dag.queue = build_queue(process_dag, num_proc)
     process_dag.save(c.SERIAL_FILE)

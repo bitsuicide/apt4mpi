@@ -126,7 +126,7 @@ class Dag:
     def __init__(self, root=None, nodes=None):
         self.nodes = nodes
         self.root = root
-        self.cue = []
+        self.queue = []
 
     def compute_son(self):
         """ Generate the son list for every nodes """

@@ -40,7 +40,7 @@ def dispatch(data, node_status, log):
 
 def next_job(data, rank):
     """ Return next job ready to execute """
-    for j in data.cue:
+    for j in data.queue:
         process = data.nodes[j[0]]
         status = j[1]
         if process.is_ready() and status == -1:
@@ -50,7 +50,7 @@ def next_job(data, rank):
 
 def remove_job(data, job):
     """ Remove a job when is completed """
-    for j in data.cue:
+    for j in data.queue:
         if job.proc_id == j:
             del j
             return 
@@ -90,7 +90,7 @@ if __name__ == '__main__':
         data = pickle.load(open("data_start.p", "rb"))
         node_status = [False for i in range(size - 1)]
         dispatch(data, node_status, log)
-        n_job = len(data.cue) # total job to do
+        n_job = len(data.queue) # total job to do
         while n_job >= 1:
             job = comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
             source = status.Get_source()
