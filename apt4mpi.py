@@ -30,7 +30,7 @@ if __name__ == "__main__":
             shutil.copy(c.DS_FILE, new_folder) # copy data structure to new dir
             os.chdir(new_folder) # move to new dir
         except OSError:
-            new_folder = "{}_{}_api4mpi".format(job_name, i) 
+            new_folder = "{}_{}_apt4mpi".format(job_name, i) 
             continue
         dir_cr = True
     # generate new qsub bash file
